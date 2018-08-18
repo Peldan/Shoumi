@@ -1,9 +1,14 @@
 .container img {
+    overflow: hidden;
     display: block;
-    width: 50%;
     margin: auto;
+    width: 65%;
     padding: 2px;
     border: 2px solid lightslategray;
+}
+
+.container img:hover {
+    cursor: pointer;
 }
 
 .header {

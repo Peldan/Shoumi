@@ -9,12 +9,12 @@ function createWindow(){
     window = new BrowserWindow({width: 1200, height: 900});
     window.loadFile(template);
     if(typeof fileName !== "undefined"){
-        console.log("NU SKA D FUNKA")
         window.webContents.on('did-finish-load', () => {
             window.webContents.send('image-msg', fileName);
         })
+    } else {
+        window.webContents.openDevTools();
     }
-    window.webContents.openDevTools();
     window.on('closed', () => {
         window = null;
     });

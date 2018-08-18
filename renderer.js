@@ -1,6 +1,8 @@
 const {dialog} = require('electron').remote;
 var {ipcRenderer} = require('electron');
-
+var header;
+var zoominfo;
+var currentZoom = 1;
 var $ = require("jquery");
 var imgdiv = document.getElementById("bild");
 var config = {attributes: true, childList: true, subtree: true};
@@ -10,28 +12,32 @@ var callback = function(mutationsList){
             console.log("") //TODO: react to new image
         }
     }
-};
+}
 
 var observer = new MutationObserver(callback);
 observer.observe(imgdiv, config);
 
 document.onkeydown = function(event) {
     event = event || window.event;
-    if(event.key === "o"){
+    if (event.key === "o") {
         openDialog();
     }
-    else if ((event.key === "ArrowDown") && event.ctrlKey){
-        alert("zoom out");
+    else if ((event.key === "ArrowDown") && event.ctrlKey) {
+        currentZoom -= 0.2;
+        for (var i = 0; i < imgdiv.childNodes.length; i++) {
+            imgdiv.childNodes[i].style.transform = "scale(" + currentZoom + ")";
+        }
+        zoominfo.innerHTML = "Zoom: " + Math.floor(currentZoom * 100) + "%";
     }
-    else if ((event.key === "ArrowUp") && event.ctrlKey){
-        alert("zoom in");
+    else if ((event.key === "ArrowUp") && event.ctrlKey) {
+        currentZoom += 0.2;
+        for (var i = 0; i < imgdiv.childNodes.length; i++) {
+            imgdiv.childNodes[i].style.transform = "scale(" + currentZoom + ")";
+        }
+        zoominfo.innerHTML = "Zoom: " + Math.floor(currentZoom * 100) + "%";
     }
-    else if (event.key === "ArrowDown"){
-        alert("scroll down");
-    }
-    else if (event.key === "ArrowUp"){
-        alert("scroll up");
-    }
+}
+
 
 
 function displayImage(fileName) {
@@ -43,6 +49,8 @@ function displayImage(fileName) {
     } else {
         imgdiv.appendChild(img);
     }
+    header = document.getElementById("#header");
+    zoominfo = document.getElementById("zoom")
 }
 function openDialog() {
         dialog.showOpenDialog({
@@ -56,11 +64,11 @@ function openDialog() {
             }
             displayImage(fileNames)
         })
-    };
 }
 
 ipcRenderer.on('image-msg', (event, fileName) => {
     const img = new Image();
     img.src = fileName;
+    img.setAttribute("class", "image");
     imgdiv.appendChild(img);
 });
