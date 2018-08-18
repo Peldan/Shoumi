@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shoumi - Main Window</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div class="header">
+    <input type="checkbox" id="continuous" name="feature" value="continuous" checked />
+    <label for="continuous">Open new images in a new window</label>
+</div>
+<main class="container">
+    <div id="bild"></div>
+</main>
+</body>
+<script src="index.js"></script>
+<script>
+    require('./renderer.js')
+</script>
+</html>

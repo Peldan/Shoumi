@@ -1,0 +1,16 @@
+.container img {
+    display: block;
+    width: 50%;
+    margin: auto;
+    padding: 2px;
+    border: 2px solid lightslategray;
+}
+
+.header {
+    width: 100%;
+    margin: auto;
+    display: block;
+    text-align: center;
+    border: 1px solid darkgray;
+    padding: 5px;
+}
