@@ -1,17 +1,32 @@
 {
-  "name": "shoumi",
+  "name": "Shoumi",
   "version": "1.0.0",
-  "description": "",
+  "description": "index.js är main-process",
   "main": "index.js",
   "dependencies": {
     "electron": "^2.0.7",
-    "jquery": "^3.3.1"
+    "jquery": "^3.3.1",
+    "materialize-css": "^1.0.0-rc.2"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron ."
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Peldan/imgviewer.git"
+  },
+  "standard": {
+    "globals": [
+      "$"
+    ]
+  },
+  "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Peldan/imgviewer/issues"
+  },
+  "homepage": "https://github.com/Peldan/imgviewer#readme"
 }

@@ -1,14 +1,17 @@
 .container img {
-    overflow: hidden;
     display: block;
     margin: auto;
     width: 65%;
     padding: 2px;
     border: 2px solid lightslategray;
+    position: relative;
+    z-index: 1000;
 }
+
 
 .container img:hover {
     cursor: pointer;
+    position: relative;
 }
 
 .header {
@@ -18,4 +21,5 @@
     text-align: center;
     border: 1px solid darkgray;
     padding: 5px;
+    position: relative;
 }
