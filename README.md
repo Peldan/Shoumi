@@ -10,4 +10,4 @@ tryck CTRL + upp/ner på piltangenterna för att få upp en häftig alert box
 
 om man är cool kan man öppna fett många bilder, så ligger de på en lång fin rad.
 
-#IMPORTANT: Fattaru inte namnet på programmet lr
+# IMPORTANT: Fattaru inte namnet på programmet lr
