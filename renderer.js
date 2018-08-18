@@ -1,6 +1,6 @@
 const {dialog} = require('electron').remote;
 var {ipcRenderer} = require('electron');
-const {BrowserWindow} = require('electron').remote;
+
 var $ = require("jquery");
 var imgdiv = document.getElementById("bild");
 var config = {attributes: true, childList: true, subtree: true};
@@ -38,27 +38,12 @@ function displayImage(fileName) {
     const checkbox = document.getElementById("continuous");
     const img = new Image();
     img.src = fileName;
-    if(checkbox.checked){
-        return new Promise(resolve => {
-            ipcRenderer.send('asynchronous-message', 'window-requested');
-            ipcRenderer.on('asynchronous-reply', (event, result, window) => {
-                resolve(window);
-            })
-        }).then(function(window) {
-            console.log(window.toString());
-            window.webContents.on('did-finish-load', ()=>{
-                let code = 'var imgdiv = document.getElementById("bild");' +
-                    'const img = new Image();' +
-                    'img.src = ' + fileName + ';' +
-                    'imgdiv.appendChild(img);';
-                window.webContents.executeJavaScript(code);
-            });
-        })
+    if(checkbox != null && checkbox.checked){
+        ipcRenderer.send('asynchronous-message', 'window-requested', fileName);
     } else {
         imgdiv.appendChild(img);
     }
 }
-
 function openDialog() {
         dialog.showOpenDialog({
             properties: ["openFile", "multiSelections"],
@@ -74,3 +59,8 @@ function openDialog() {
     };
 }
 
+ipcRenderer.on('image-msg', (event, fileName) => {
+    const img = new Image();
+    img.src = fileName;
+    imgdiv.appendChild(img);
+});

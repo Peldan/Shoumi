@@ -2,29 +2,31 @@ const {app, BrowserWindow} = require('electron');
 const {ipcMain} = require ('electron');
 
 let window;
+let template = 'index.html';
+let fileName;
 
 function createWindow(){
     window = new BrowserWindow({width: 1200, height: 900});
-    window.loadFile('index.html');
+    window.loadFile(template);
     window.webContents.openDevTools();
     window.on('closed', () => {
         window = null;
     });
+    if(fileName !== undefined){
+        window.webContents.send('image-msg', fileName);
+    }
 }
-
 
 
 app.on('ready', () => {
     createWindow();
+    ipcMain.on('asynchronous-message', (event, arg, fileName) => {
+        if (arg === 'window-requested') {
+            this.fileName = fileName;
+            template = 'imagevwr.html';
+            createWindow();
+        } else {
+            event.sender.send('asynchronous-reply', 'unrecognized-args');
+        }
+    })
 });
-
-ipcMain.on('asynchronous-message', (event, arg) => {
-    if(arg === 'window-requested') {
-        var win = new BrowserWindow({width: 1200, height: 900});
-        win.loadFile('index.html');
-        win.on('closed', () => win = null);
-        event.sender.send('asynchronous-reply', 'window-ready', win);
-    } else {
-        event.sender.send('asynchronous-reply', 'unrecognized-args');
-    }
-})
