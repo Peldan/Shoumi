@@ -8,25 +8,34 @@ let fileName;
 function createWindow(){
     window = new BrowserWindow({width: 1200, height: 900});
     window.loadFile(template);
+    if(typeof fileName !== "undefined"){
+        console.log("NU SKA D FUNKA")
+        window.webContents.on('did-finish-load', () => {
+            window.webContents.send('image-msg', fileName);
+        })
+    }
     window.webContents.openDevTools();
     window.on('closed', () => {
         window = null;
     });
-    if(fileName !== undefined){
-        window.webContents.send('image-msg', fileName);
-    }
+
 }
 
+function setupNewWindow(name){
+    fileName = name;
+    template = 'imagevwr.html';
+    createWindow();
+}
 
 app.on('ready', () => {
     createWindow();
     ipcMain.on('asynchronous-message', (event, arg, fileName) => {
         if (arg === 'window-requested') {
-            this.fileName = fileName;
-            template = 'imagevwr.html';
-            createWindow();
+            setupNewWindow(fileName);
         } else {
             event.sender.send('asynchronous-reply', 'unrecognized-args');
         }
     })
 });
+
+
