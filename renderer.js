@@ -47,7 +47,10 @@ function displayImage(fileName) {
     if(checkbox != null && checkbox.checked){
         ipcRenderer.send('asynchronous-message', 'window-requested', fileName);
     } else {
-        imgdiv.appendChild(img);
+        var newrow = document.createElement('div');
+        newrow.className = 'row';
+        imgdiv.appendChild(newrow);
+        newrow.appendChild(img);
     }
     header = document.getElementById("#header");
     zoominfo = document.getElementById("zoom")
@@ -68,11 +71,14 @@ function openDialog() {
 
 function enableFullscreen(){
     var window = electron.remote.getCurrentWindow();
+    var main = document.getElementsByTagName("main")[0];
     window.setFullScreen(true);
-    for(var i = 0; i < imgdiv.childNodes.length; i++){
-        imgdiv.childNodes[i].style.height = "100%";
-        imgdiv.childNodes[i].style.width = "100%";
-    }
+    var test = $('#bild')
+    var imgsrc = test.children().first().children().first().attr('src');
+    main.setAttribute('background-image', 'url("' + imgsrc + '")');
+    main.setAttribute('background-size', 'cover');
+    main.setAttribute('background-repeat', 'no-repeat');
+    main.setAttribute('background-position', 'center center');
 }
 
 function enableOverview(){
@@ -97,8 +103,9 @@ $('.container').on("mousedown","img", function (e) {
     var target = e.target; //TODO add dragging functionality
 });
 
-$('.header').on("click", "button", function(e) {
+$('nav').on("click", "a", function(e) {
     e.preventDefault();
+    console.log(e.target.id)
     if(e.target.id === 'fullscreen'){
         enableFullscreen();
     }
