@@ -7,7 +7,9 @@ var cardarea;
 var currentZoom = 1;
 var isFullscreen = false;
 var currentBg = 0;
-var menu;
+var imglist;
+var main;
+var cards = [];
 var $ = require("jquery");
 var imgdiv = $('#bild');
 var config = {attributes: true, childList: true, subtree: true};
@@ -35,55 +37,85 @@ document.onkeydown = function(event) {
         }
         zoominfo.innerHTML = "Zoom: " + Math.floor(currentZoom * 100) + "%";
     } else if (event.code === "Space" && isFullscreen) {
-        alert("spejs");
+        flipbg();
     } else if (event.key === "Escape" && isFullscreen) {
         enableOverview();
     }
 
 }
 
-function displayTip(tip){
-    var tiparea = document.getElementById("tipcol");
-    var card = document.createElement("div");
-    var cardtextarea = document.createElement("div");
-    var cardaction = document.createElement("div");
-    var cardtitle = document.createElement("span");
-    var cardtext = document.createElement("p");
-    var cardoption = document.createElement("p");
-    card.className = "card blue-grey darken-1";
-    cardtextarea.className = "card-content white-text";
-    cardaction.className = "card-action";
-    cardtitle.className = "card-title";
-    cardtitle.innerText = "Tip";
-    cardtext.innerText = tip;
-    cardoption.id = "btn";
-    cardoption.innerHTML = "<i class=\"tiny material-icons\">check</i> Ok, got it!";
-    tiparea.appendChild(card);
-    card.appendChild(cardtextarea);
-    card.appendChild(cardaction);
-    cardtextarea.appendChild(cardtitle);
-    cardtextarea.appendChild(cardtext);
-    cardaction.appendChild(cardoption);
+function flipbg(){
+    if(imglist[currentBg].src === 'undefined'){
+        createCardObj('You have reached the end of your imported images!', '[Ok, got it!]');
+        displayTip();
+        return;
+    }
+    var url = imglist[currentBg].src.replace("file:///", "");
+    main.style.backgroundImage = "url('" + url + "')";
+    main.style.backgroundRepeat = "no-repeat";
+    main.style.backgroundPosition = 'center top';
+    main.style.backgroundSize = ('auto ' + ($('main').height() - $('header:first').height()) + 'px');
+    currentBg++;
 }
 
-function displayImage(fileName) {
-    const checkbox = document.getElementById("continuous");
-    const img = new Image();
-    img.src = fileName;
-    if(checkbox != null && checkbox.checked){
-        ipcRenderer.send('asynchronous-message', 'window-requested', fileName);
-    } else {
-        var newrow = document.createElement('div');
-        newrow.className = 'row';
-        imgdiv.append(newrow);
-        newrow.appendChild(img);
+function displayTip(){
+    var cardobj = cards[cards.length - 1];
+    if(!cardobj.isRead) {
+        var tiparea = document.getElementById("tipcol");
+        var card = document.createElement("div");
+        var cardtextarea = document.createElement("div");
+        var cardaction = document.createElement("div");
+        var cardtitle = document.createElement("span");
+        var cardtext = document.createElement("p");
+        var cardoption = document.createElement("p");
+        card.className = "card blue-grey darken-1";
+        cardtextarea.className = "card-content white-text";
+        cardaction.className = "card-action";
+        cardtitle.className = "card-title";
+        cardtitle.innerText = "Tip";
+        cardtext.innerText = cardobj.text;
+        cardoption.id = "btn";
+        cardoption.innerHTML = "<i class=\"tiny material-icons\">check</i>" + cardobj.options[0];
+        tiparea.appendChild(card);
+        card.appendChild(cardtextarea);
+        card.appendChild(cardaction);
+        cardtextarea.appendChild(cardtitle);
+        cardtextarea.appendChild(cardtext);
+        cardaction.appendChild(cardoption);
+        cardobj.isRead = true;
     }
+}
+
+
+function displayImage(fileNames) {
+    const checkbox = document.getElementById("continuous");
+    for(var i = 0; i < fileNames.length; i++) {
+        const img = new Image();
+        img.src = fileNames[i];
+        if (checkbox != null && checkbox.checked) {
+            ipcRenderer.send('asynchronous-message', 'window-requested', fileNames[i]);
+        } else {
+            var newrow = document.createElement('div');
+            newrow.className = 'row center-align';
+            imgdiv.append(newrow);
+            newrow.appendChild(img);
+        }
+    }
+    main = document.getElementsByTagName("main")[0];
     header = document.getElementById("#header");
     zoominfo = document.getElementById("zoom")
     var target = document.getElementById("bild");
     var observer = new MutationObserver(callback);
     cardarea = document.getElementById("tipcol");
     observer.observe(target, config);
+    imglist = imgdiv.find('img');
+}
+
+function createCardObj(text, options){
+    if(typeof text === 'string' && Array.isArray(options)) {
+        var card = {text: text, options: options, isRead: false};
+        cards.push(card);
+    }
 }
 
 function openDialog() {
@@ -96,33 +128,37 @@ function openDialog() {
             if (fileNames === undefined) {
                 return;
             }
-            displayImage(fileNames)
+            console.log(fileNames);
+            displayImage(fileNames);
         })
+}
+
+function visibleImages(visibility){
+    for(var i = 0; i < imglist.length; i++){
+        imglist[i].style.visibility = visibility;
+    }
 }
 
 function enableFullscreen(){
     document.documentElement.style.overflow = "hidden";
     var window = electron.remote.getCurrentWindow();
-    var main = document.getElementsByTagName("main")[0];
     window.setFullScreen(true);
-    var imglist = imgdiv.find('img');
     var url = imglist[currentBg].src.replace("file:///", "");
-    imglist[currentBg].style.visibility = "hidden";
-    main.style.backgroundImage = "url('" + url + "')";
-    main.style.backgroundRepeat = "no-repeat";
-    main.style.backgroundPosition = 'center top';
-    main.style.backgroundSize = ('auto ' + ($('main').height() - $('header:first').height()) + 'px');
+    visibleImages("hidden");
+    flipbg();
     isFullscreen = true;
-    displayTip("You're now in full screen mode! Use [SPACE] to flip between your imported images\n" +
-        "Press [ESCAPE] or the Overview button to leave full screen");
-    console.log(isFullscreen);
+    displayTip();
 }
 
 function enableOverview(){
+    document.documentElement.style.overflow = "scroll";
+    visibleImages("visible");
+    main.style.background = "";
     isFullscreen = false;
     var window = electron.remote.getCurrentWindow();
     window.setFullScreen(false);
     console.log(isFullscreen);
+    currentBg = 0;
 }
 
 
@@ -156,5 +192,10 @@ $('#tipcol').on("click", function(e) {
     }
 })
 
+$( document ).ready(function (){
+    createCardObj("Press [O] to open an image", ['Ok, got it!']);
+    displayTip();
+    createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
+})
 
 
