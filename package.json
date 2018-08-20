@@ -13,7 +13,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+	"start2": "./node_modules/.bin/electron ."
   },
   "repository": {
     "type": "git",
