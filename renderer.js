@@ -161,6 +161,49 @@ function enableOverview(){
     currentBg = 0;
 }
 
+function selectMode(){
+    function changeCursor(cursor){
+        for(var i = 0; i < imglist.length; i++){
+            var img = imglist[i];
+            img.style.cursor = cursor;
+        }
+    }
+    if(imglist != undefined && imglist.length > 0){
+        var startx;
+        var starty;
+        var currx;
+        var curry;
+        changeCursor("crosshair");
+        $('img').mousedown(function(e){
+            startx = e.offsetX;
+            starty = e.offsetY;
+            $(this).data('mouseheld', true);
+        })
+        $('img').mouseup(function(e){
+            changeCursor("default");
+            $(this).data('mouseheld', false);
+            if(currx != undefined && curry != undefined){
+                var endx = currx;
+                var endy = curry;
+                console.log("Dragged from " + "X: " + startx + " Y: " + starty);
+                console.log("To " + "X: " + endx + " Y: " + endy);
+            }
+        })
+        $('img').mouseleave(function(e){
+            $(this).data('mouseheld', false);
+        })
+        $('img').mousemove(function(e){
+            if($(this).data('mouseheld')){
+                currx = e.offsetX;
+                curry = e.offsetY;
+            }
+        })
+    } else {
+        createCardObj("You need to import images before using this", ['Ok, got it!']);
+        displayTip();
+    }
+}
+
 
 ipcRenderer.on('image-msg', (event, fileName) => {
     const img = new Image();
@@ -184,6 +227,14 @@ $('nav').on("click", "a", function(e) {
         enableOverview();
     }
 });
+
+$('#toolarea').on("click", '.toolbtn', function(e) {
+    e.preventDefault();
+    console.log(e.target.id);
+    if(e.target.id === 'selectbtn'){
+        selectMode();
+    }
+})
 
 $('#tipcol').on("click", function(e) {
     e.preventDefault();

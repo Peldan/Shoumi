@@ -11,7 +11,7 @@
 <body>
 
 <header>
-<nav>
+<nav class="nav-extended">
     <div class="nav-wrapper">
         <a href="" class="brand-logo">Shoumi</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
@@ -19,13 +19,19 @@
             <li><a id="overview">Overview</a></li>
         </ul>
     </div>
+    <div class="nav-content">
+            <ul id="toolarea" class="tabs tabs-transparent">
+                <li><a><i id="selectbtn" class="toolbtn tiny material-icons">select_all</i></a></li>
+                <li><a><i class="toolbtn tiny material-icons">cloud</i></a></li>
+            </ul>
+    </div>
 </nav>
 </header>
 
 
 <main>
     <div class="container">
-        <div class="row">
+        <div class="row" id="toprow">
             <div class="col s4">
             </div>
             <div class="col s4" id="tipcol">
@@ -34,7 +40,8 @@
             <div class="col s4">
             </div>
         </div>
-        <div class="row">
+
+        <div class="row" id="mainrow">
             <div class="col s12">
                 <div id="bild" class="center-align">
 
