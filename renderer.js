@@ -193,27 +193,26 @@ function selectMode(){
         var ctx;
         var rect = {};
         changeCursor("crosshair");
-        $('img').mousedown(function(e){
+        $('canvas').mousedown(function(e){
             startx = e.offsetX;
             starty = e.offsetY;
             $(this).data('mouseheld', true);
         })
-        $('img').mouseup(function(e){
+        $('canvas').mouseup(function(e){
             changeCursor("default");
             $(this).data('mouseheld', false);
             if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
                 var endx = currx;
                 var endy = curry;
 
-
                 console.log("Dragged from " + "X: " + startx + " Y: " + starty);
                 console.log("To " + "X: " + endx + " Y: " + endy);
             }
         })
-        $('img').mouseleave(function(e){
+        $('canvas').mouseleave(function(e){
             $(this).data('mouseheld', false);
         })
-        $('img').mousemove(function(e){
+        $('canvas').mousemove(function(e){
             if($(this).data('mouseheld')){
                 console.log($(this).offset())
                 currx = e.offsetX;
