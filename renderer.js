@@ -21,6 +21,9 @@ document.onkeydown = function(event) {
     if (event.key === "o") {
         openDialog();
     }
+    else if (event.code === "ArrowUp" && isFullscreen){
+        //TODO bläddra bakåt i fullscreen
+    }
     else if (event.code === "Space" && isFullscreen) {
         flipbg();
     }
@@ -33,7 +36,7 @@ document.onkeydown = function(event) {
 
 }
 
-function flipbg(){
+function flipbg(forward){
     if(currentBg === (imglist.length)){
         createCardObj('You have reached the end of your imported images!', ['Ok, got it!']);
         displayTip();
@@ -168,7 +171,7 @@ function enableOverview(){
 }
 
 function duplicateSelection() {
-
+    console.log(currentSelection);
 }
 
 function selectMode(){
@@ -180,6 +183,7 @@ function selectMode(){
     }
     if(imglist != undefined && imglist.length > 0){
         var layercanvas = $('.layercanvas');
+        var lastModifiedCanvas;
         var startx;
         var starty;
         var currx;
@@ -191,6 +195,11 @@ function selectMode(){
             startx = e.offsetX;
             starty = e.offsetY;
             $(this).data('mouseheld', true);
+            if(lastModifiedCanvas !== undefined && lastModifiedCanvas[0] !== $(this)[0]) {
+                ctx = lastModifiedCanvas[0].getContext('2d');
+                ctx.beginPath();
+                ctx.clearRect(0, 0, lastModifiedCanvas[0].width, lastModifiedCanvas[0].height);
+            }
         })
         layercanvas.mouseup(function(e){
                 ctx = $(this)[0].getContext('2d');
@@ -200,6 +209,7 @@ function selectMode(){
                     var imgcanvas = $(this).siblings()[0];
                     var imgcanvasctx = imgcanvas.getContext('2d');
                     currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
+                    lastModifiedCanvas = $(this);
                 } else {
                     currentSelection = null;
                 }
@@ -209,13 +219,18 @@ function selectMode(){
                 curry = null;
         })
         layercanvas.mouseleave(function(e){
+            if($(this).data('mouseheld')){
+                ctx = $(this)[0].getContext('2d');
+                ctx.beginPath();
+                ctx.clearRect(0, 0, c.width, c.height);
+            }
             $(this).data('mouseheld', false);
         })
         $('canvas').mousemove(function(e){
             if($(this).data('mouseheld')){
+                c = $(this)[0];
                 ctx = $(this)[0].getContext('2d');
                 ctx.beginPath();
-                c = $(this)[0];
                 ctx.clearRect(0, 0, c.width, c.height);
                 ctx.strokeStyle="red";
                 currx = e.offsetX;
