@@ -14,7 +14,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-	"start2": "./opt/build/repo/node_modules/electron ."
+	"start2": "/opt/build/repo/node_modules/electron ."
   },
   "repository": {
     "type": "git",
