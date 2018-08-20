@@ -45,8 +45,8 @@ document.onkeydown = function(event) {
 }
 
 function flipbg(){
-    if(imglist[currentBg].src === 'undefined'){
-        createCardObj('You have reached the end of your imported images!', '[Ok, got it!]');
+    if(currentBg === (imglist.length)){
+        createCardObj('You have reached the end of your imported images!', ['Ok, got it!']);
         displayTip();
         return;
     }
