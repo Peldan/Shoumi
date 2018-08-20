@@ -50,7 +50,7 @@ function flipbg(){
         displayTip();
         return;
     }
-    var url = imglist[currentBg].src.replace("file:///", "");
+    var url = imglist[currentBg].toDataURL();
     main.style.backgroundImage = "url('" + url + "')";
     main.style.backgroundRepeat = "no-repeat";
     main.style.backgroundPosition = 'center top';
@@ -89,18 +89,34 @@ function displayTip(){
 
 function displayImage(fileNames) {
     const checkbox = document.getElementById("continuous");
-    for(var i = 0; i < fileNames.length; i++) {
+    fileNames.forEach(function(file){
         const img = new Image();
-        img.src = fileNames[i];
+        img.src = file;
         if (checkbox != null && checkbox.checked) {
-            ipcRenderer.send('asynchronous-message', 'window-requested', fileNames[i]);
+            ipcRenderer.send('asynchronous-message', 'window-requested', file);
         } else {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            canvas.id = 'imgcanvas';
             var newrow = document.createElement('div');
             newrow.className = 'row center-align';
             imgdiv.append(newrow);
-            newrow.appendChild(img);
+            canvas.width = 1000;
+            canvas.height = 800;
+            img.onload = function(){
+                console.log(canvas.width + " lol " + canvas.height)
+                var wratio = canvas.width / img.width;
+                var hratio = canvas.height / img.height;
+                var ratio  = Math.min ( wratio, hratio );
+                var centerx = ( canvas.width - img.width*ratio ) / 2;
+                var centery = ( canvas.height - img.height*ratio ) / 2;
+                ctx.drawImage(img, 0, 0,
+                    img.width, img.height,
+                    centerx, centery, img.width * ratio, img.height * ratio);
+            };
+            newrow.appendChild(canvas);
         }
-    }
+    });
     main = document.getElementsByTagName("main")[0];
     header = document.getElementById("#header");
     zoominfo = document.getElementById("zoom")
@@ -108,7 +124,7 @@ function displayImage(fileNames) {
     var observer = new MutationObserver(callback);
     cardarea = document.getElementById("tipcol");
     observer.observe(target, config);
-    imglist = imgdiv.find('img');
+    imglist = imgdiv.find('canvas');
 }
 
 function createCardObj(text, options){
@@ -143,7 +159,7 @@ function enableFullscreen(){
     document.documentElement.style.overflow = "hidden";
     var window = electron.remote.getCurrentWindow();
     window.setFullScreen(true);
-    var url = imglist[currentBg].src.replace("file:///", "");
+    var url = imglist[currentBg].toDataURL();
     visibleImages("hidden");
     flipbg();
     isFullscreen = true;
@@ -173,6 +189,9 @@ function selectMode(){
         var starty;
         var currx;
         var curry;
+        var c;
+        var ctx;
+        var rect = {};
         changeCursor("crosshair");
         $('img').mousedown(function(e){
             startx = e.offsetX;
@@ -182,9 +201,11 @@ function selectMode(){
         $('img').mouseup(function(e){
             changeCursor("default");
             $(this).data('mouseheld', false);
-            if(currx != undefined && curry != undefined){
+            if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
                 var endx = currx;
                 var endy = curry;
+
+
                 console.log("Dragged from " + "X: " + startx + " Y: " + starty);
                 console.log("To " + "X: " + endx + " Y: " + endy);
             }
@@ -194,6 +215,7 @@ function selectMode(){
         })
         $('img').mousemove(function(e){
             if($(this).data('mouseheld')){
+                console.log($(this).offset())
                 currx = e.offsetX;
                 curry = e.offsetY;
             }
