@@ -6,16 +6,14 @@ var zoominfo;
 var cardarea;
 var currentZoom = 1;
 var isFullscreen = false;
+var currentSelection;
 var currentBg = 0;
 var imglist;
+var layerlist;
 var main;
 var cards = [];
 var $ = require("jquery");
 var imgdiv = $('#bild');
-var config = {attributes: true, childList: true, subtree: true};
-var callback = function(mutationsList) {
- //TODO reagera på nya noder? vettefan om jag orkar l0l
-}
 
 
 document.onkeydown = function(event) {
@@ -23,23 +21,14 @@ document.onkeydown = function(event) {
     if (event.key === "o") {
         openDialog();
     }
-    else if ((event.key === "ArrowDown") && event.ctrlKey) {
-        currentZoom -= 0.2;
-        for (var i = 0; i < imgdiv.childNodes.length; i++) {
-            imgdiv.childNodes[i].style.transform = "scale(" + currentZoom + ")"; //TODO work on the zoom
-        }
-        zoominfo.innerHTML = "Zoom: " + Math.floor(currentZoom * 100) + "%";
-    }
-    else if ((event.key === "ArrowUp") && event.ctrlKey) {
-        currentZoom += 0.2;
-        for (var i = 0; i < imgdiv.childNodes.length; i++) {
-            imgdiv.childNodes[i].style.transform = "scale(" + currentZoom + ")";
-        }
-        zoominfo.innerHTML = "Zoom: " + Math.floor(currentZoom * 100) + "%";
-    } else if (event.code === "Space" && isFullscreen) {
+    else if (event.code === "Space" && isFullscreen) {
         flipbg();
-    } else if (event.key === "Escape" && isFullscreen) {
+    }
+    else if (event.key === "Escape" && isFullscreen) {
         enableOverview();
+    }
+    else if (event.key === "Enter" && (currentSelection !== null && currentSelection !== 'undefined')){
+        duplicateSelection();
     }
 
 }
@@ -86,7 +75,6 @@ function displayTip(){
     }
 }
 
-
 function displayImage(fileNames) {
     const checkbox = document.getElementById("continuous");
     fileNames.forEach(function(file){
@@ -95,36 +83,38 @@ function displayImage(fileNames) {
         if (checkbox != null && checkbox.checked) {
             ipcRenderer.send('asynchronous-message', 'window-requested', file);
         } else {
-            var canvas = document.createElement('canvas');
-            var ctx = canvas.getContext('2d');
-            canvas.id = 'imgcanvas';
+            var firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
+            var secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
+            var ctx = firstCanvas.getContext('2d');
+            firstCanvas.className = 'imgcanvas';
+            secondCanvas.className = 'layercanvas'
             var newrow = document.createElement('div');
-            newrow.className = 'row center-align';
+            newrow.className = 'row center-align cr';
             imgdiv.append(newrow);
-            canvas.width = 1000;
-            canvas.height = 800;
+            firstCanvas.width = 1000;
+            firstCanvas.height = 800;
+            secondCanvas.width = firstCanvas.width;
+            secondCanvas.height = firstCanvas.height;
+            newrow.style.marginBottom = firstCanvas.height + "px";
             img.onload = function(){
-                console.log(canvas.width + " lol " + canvas.height)
-                var wratio = canvas.width / img.width;
-                var hratio = canvas.height / img.height;
+                var wratio = firstCanvas.width / img.width;
+                var hratio = firstCanvas.height / img.height;
                 var ratio  = Math.min ( wratio, hratio );
-                var centerx = ( canvas.width - img.width*ratio ) / 2;
-                var centery = ( canvas.height - img.height*ratio ) / 2;
+                var centerx = ( firstCanvas.width - img.width*ratio ) / 2;
+                var centery = ( firstCanvas.height - img.height*ratio ) / 2;
                 ctx.drawImage(img, 0, 0,
                     img.width, img.height,
                     centerx, centery, img.width * ratio, img.height * ratio);
             };
-            newrow.appendChild(canvas);
+            newrow.appendChild(firstCanvas);
+            newrow.appendChild(secondCanvas);
         }
     });
-    main = document.getElementsByTagName("main")[0];
-    header = document.getElementById("#header");
-    zoominfo = document.getElementById("zoom")
-    var target = document.getElementById("bild");
-    var observer = new MutationObserver(callback);
-    cardarea = document.getElementById("tipcol");
-    observer.observe(target, config);
-    imglist = imgdiv.find('canvas');
+    imglist = document.getElementsByClassName('imgcanvas');
+    layerlist = document.getElementsByClassName('layercanvas');
+    console.log(imglist[0].id);
+    console.log(imglist.length);
+    console.log(fileNames.length);
 }
 
 function createCardObj(text, options){
@@ -177,46 +167,61 @@ function enableOverview(){
     currentBg = 0;
 }
 
+function duplicateSelection() {
+
+}
+
 function selectMode(){
     function changeCursor(cursor){
-        for(var i = 0; i < imglist.length; i++){
-            var img = imglist[i];
-            img.style.cursor = cursor;
+        for(var i = 0; i < layerlist.length; i++){
+            var layer = layerlist[i];
+            layer.style.cursor = cursor;
         }
     }
     if(imglist != undefined && imglist.length > 0){
+        var layercanvas = $('.layercanvas');
         var startx;
         var starty;
         var currx;
         var curry;
         var c;
         var ctx;
-        var rect = {};
         changeCursor("crosshair");
-        $('canvas').mousedown(function(e){
+        layercanvas.mousedown(function(e){
             startx = e.offsetX;
             starty = e.offsetY;
             $(this).data('mouseheld', true);
         })
-        $('canvas').mouseup(function(e){
-            changeCursor("default");
-            $(this).data('mouseheld', false);
-            if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
-                var endx = currx;
-                var endy = curry;
-
-                console.log("Dragged from " + "X: " + startx + " Y: " + starty);
-                console.log("To " + "X: " + endx + " Y: " + endy);
-            }
+        layercanvas.mouseup(function(e){
+                ctx = $(this)[0].getContext('2d');
+                c = $(this)[0];
+                $(this).data('mouseheld', false);
+                if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
+                    var imgcanvas = $(this).siblings()[0];
+                    var imgcanvasctx = imgcanvas.getContext('2d');
+                    currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
+                } else {
+                    currentSelection = null;
+                }
+                startx = null;
+                starty = null;
+                currx = null;
+                curry = null;
         })
-        $('canvas').mouseleave(function(e){
+        layercanvas.mouseleave(function(e){
             $(this).data('mouseheld', false);
         })
         $('canvas').mousemove(function(e){
             if($(this).data('mouseheld')){
-                console.log($(this).offset())
+                ctx = $(this)[0].getContext('2d');
+                ctx.beginPath();
+                c = $(this)[0];
+                ctx.clearRect(0, 0, c.width, c.height);
+                ctx.strokeStyle="red";
                 currx = e.offsetX;
                 curry = e.offsetY;
+                ctx.rect(startx, starty, currx - startx, curry - starty);
+                ctx.stroke();
             }
         })
     } else {
@@ -265,6 +270,10 @@ $('#tipcol').on("click", function(e) {
 })
 
 $( document ).ready(function (){
+    main = document.getElementsByTagName("main")[0];
+    header = document.getElementById("#header");
+    zoominfo = document.getElementById("zoom")
+    cardarea = document.getElementById("tipcol");
     createCardObj("Press [O] to open an image", ['Ok, got it!']);
     displayTip();
     createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
