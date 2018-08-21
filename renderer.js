@@ -7,6 +7,7 @@ var cardarea;
 var currentZoom = 1;
 var isFullscreen = false;
 var currentSelection;
+var lastModifiedCanvas;
 var currentBg = 0;
 var imglist;
 var layerlist;
@@ -14,6 +15,7 @@ var main;
 var cards = [];
 var $ = require("jquery");
 var imgdiv = $('#bild');
+
 
 
 document.onkeydown = function(event) {
@@ -31,10 +33,23 @@ document.onkeydown = function(event) {
         enableOverview();
     }
     else if (event.key === "Enter" && (currentSelection !== null && currentSelection !== 'undefined')){
-        duplicateSelection();
+            clearSelection();
+            duplicateSelection();
     }
 
 }
+
+function clearSelection(){
+    ctx = lastModifiedCanvas.getContext('2d');
+    ctx.beginPath();
+    ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
+}
+
+function duplicateSelection() {
+    ctx = lastModifiedCanvas.getContext('2d');
+    ctx.putImageData(currentSelection, 0, 0);
+}
+
 
 function flipbg(forward){
     if(currentBg === (imglist.length)){
@@ -128,18 +143,18 @@ function createCardObj(text, options){
 }
 
 function openDialog() {
-        dialog.showOpenDialog({
-            properties: ["openFile", "multiSelections"],
-            filters: [
-                {name: "Images", extensions: ["jpg", "png", "gif"]},
-                {name: 'All Files', extensions: ['*']}]
-        }, fileNames => {
-            if (fileNames === undefined) {
-                return;
-            }
-            console.log(fileNames);
-            displayImage(fileNames);
-        })
+    dialog.showOpenDialog({
+        properties: ["openFile", "multiSelections"],
+        filters: [
+            {name: "Images", extensions: ["jpg", "png", "gif"]},
+            {name: 'All Files', extensions: ['*']}]
+    }, fileNames => {
+        if (fileNames === undefined) {
+            return;
+        }
+        console.log(fileNames);
+        displayImage(fileNames);
+    })
 }
 
 function visibleImages(visibility){
@@ -170,9 +185,6 @@ function enableOverview(){
     currentBg = 0;
 }
 
-function duplicateSelection() {
-    console.log(currentSelection);
-}
 
 function selectMode(){
     function changeCursor(cursor){
@@ -183,7 +195,6 @@ function selectMode(){
     }
     if(imglist != undefined && imglist.length > 0){
         var layercanvas = $('.layercanvas');
-        var lastModifiedCanvas;
         var startx;
         var starty;
         var currx;
@@ -195,28 +206,28 @@ function selectMode(){
             startx = e.offsetX;
             starty = e.offsetY;
             $(this).data('mouseheld', true);
-            if(lastModifiedCanvas !== undefined && lastModifiedCanvas[0] !== $(this)[0]) {
-                ctx = lastModifiedCanvas[0].getContext('2d');
+            if(lastModifiedCanvas !== undefined && lastModifiedCanvas !== $(this)[0]) {
+                ctx = lastModifiedCanvas.getContext('2d');
                 ctx.beginPath();
-                ctx.clearRect(0, 0, lastModifiedCanvas[0].width, lastModifiedCanvas[0].height);
+                ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
             }
         })
         layercanvas.mouseup(function(e){
-                ctx = $(this)[0].getContext('2d');
-                c = $(this)[0];
-                $(this).data('mouseheld', false);
-                if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
-                    var imgcanvas = $(this).siblings()[0];
-                    var imgcanvasctx = imgcanvas.getContext('2d');
-                    currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
-                    lastModifiedCanvas = $(this);
-                } else {
-                    currentSelection = null;
-                }
-                startx = null;
-                starty = null;
-                currx = null;
-                curry = null;
+            ctx = $(this)[0].getContext('2d');
+            c = $(this)[0];
+            $(this).data('mouseheld', false);
+            if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
+                var imgcanvas = $(this).siblings()[0];
+                var imgcanvasctx = imgcanvas.getContext('2d');
+                currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
+                lastModifiedCanvas = $(this)[0];
+            } else {
+                currentSelection = null;
+            }
+            startx = null;
+            starty = null;
+            currx = null;
+            curry = null;
         })
         layercanvas.mouseleave(function(e){
             if($(this).data('mouseheld')){
@@ -293,5 +304,3 @@ $( document ).ready(function (){
     displayTip();
     createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
 })
-
-
