@@ -1,21 +1,20 @@
 const {dialog} = require('electron').remote;
-var electron = require('electron');
-var {ipcRenderer} = require('electron');
-var header;
-var zoominfo;
-var cardarea;
-var currentZoom = 1;
-var isFullscreen = false;
-var currentSelection;
-var lastModifiedCanvas;
-var currentBg = 0;
-var imglist;
-var layerlist;
-var main;
-var cards = [];
-var $ = require("jquery");
-var imgdiv = $('#bild');
-
+let electron = require('electron');
+let {ipcRenderer} = require('electron');
+let header;
+let zoominfo;
+let cardarea;
+let isFullscreen = false;
+let currentSelection;
+let lastModifiedCanvas;
+let currentBg = 0;
+let imglist;
+let layerlist;
+let main;
+let cards = [];
+let $ = require("jquery");
+let imgdiv = $('#bild');
+let globalcanvas;
 
 
 document.onkeydown = function(event) {
@@ -40,14 +39,16 @@ document.onkeydown = function(event) {
 }
 
 function clearSelection(){
-    ctx = lastModifiedCanvas.getContext('2d');
+    let ctx = lastModifiedCanvas.getContext('2d');
     ctx.beginPath();
     ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
 }
 
 function duplicateSelection() {
-    ctx = lastModifiedCanvas.getContext('2d');
-    ctx.putImageData(currentSelection, 0, 0);
+    let ctx = globalcanvas.getContext('2d');
+    createImageBitmap(currentSelection).then(function(bitmap) {
+        ctx.drawImage(bitmap, 0, 0);
+    })
 }
 
 
@@ -57,7 +58,7 @@ function flipbg(forward){
         displayTip();
         return;
     }
-    var url = imglist[currentBg].toDataURL();
+    let url = imglist[currentBg].toDataURL();
     main.style.backgroundImage = "url('" + url + "')";
     main.style.backgroundRepeat = "no-repeat";
     main.style.backgroundPosition = 'center top';
@@ -66,15 +67,15 @@ function flipbg(forward){
 }
 
 function displayTip(){
-    var cardobj = cards[cards.length - 1];
+    let cardobj = cards[cards.length - 1];
     if(!cardobj.isRead) {
-        var tiparea = document.getElementById("tipcol");
-        var card = document.createElement("div");
-        var cardtextarea = document.createElement("div");
-        var cardaction = document.createElement("div");
-        var cardtitle = document.createElement("span");
-        var cardtext = document.createElement("p");
-        var cardoption = document.createElement("p");
+        let tiparea = document.getElementById("tipcol");
+        let card = document.createElement("div");
+        let cardtextarea = document.createElement("div");
+        let cardaction = document.createElement("div");
+        let cardtitle = document.createElement("span");
+        let cardtext = document.createElement("p");
+        let cardoption = document.createElement("p");
         card.className = "card blue-grey darken-1";
         cardtextarea.className = "card-content white-text";
         cardaction.className = "card-action";
@@ -101,12 +102,12 @@ function displayImage(fileNames) {
         if (checkbox != null && checkbox.checked) {
             ipcRenderer.send('asynchronous-message', 'window-requested', file);
         } else {
-            var firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
-            var secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
-            var ctx = firstCanvas.getContext('2d');
+            let firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
+            let secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
+            let ctx = firstCanvas.getContext('2d');
             firstCanvas.className = 'imgcanvas';
             secondCanvas.className = 'layercanvas'
-            var newrow = document.createElement('div');
+            let newrow = document.createElement('div');
             newrow.className = 'row center-align cr';
             imgdiv.append(newrow);
             firstCanvas.width = 1000;
@@ -115,11 +116,11 @@ function displayImage(fileNames) {
             secondCanvas.height = firstCanvas.height;
             newrow.style.marginBottom = firstCanvas.height + "px";
             img.onload = function(){
-                var wratio = firstCanvas.width / img.width;
-                var hratio = firstCanvas.height / img.height;
-                var ratio  = Math.min ( wratio, hratio );
-                var centerx = ( firstCanvas.width - img.width*ratio ) / 2;
-                var centery = ( firstCanvas.height - img.height*ratio ) / 2;
+                let wratio = firstCanvas.width / img.width;
+                let hratio = firstCanvas.height / img.height;
+                let ratio  = Math.min ( wratio, hratio );
+                let centerx = ( firstCanvas.width - img.width*ratio ) / 2;
+                let centery = ( firstCanvas.height - img.height*ratio ) / 2;
                 ctx.drawImage(img, 0, 0,
                     img.width, img.height,
                     centerx, centery, img.width * ratio, img.height * ratio);
@@ -137,7 +138,7 @@ function displayImage(fileNames) {
 
 function createCardObj(text, options){
     if(typeof text === 'string' && Array.isArray(options)) {
-        var card = {text: text, options: options, isRead: false};
+        let card = {text: text, options: options, isRead: false};
         cards.push(card);
     }
 }
@@ -158,16 +159,16 @@ function openDialog() {
 }
 
 function visibleImages(visibility){
-    for(var i = 0; i < imglist.length; i++){
+    for(let i = 0; i < imglist.length; i++){
         imglist[i].style.visibility = visibility;
     }
 }
 
 function enableFullscreen(){
     document.documentElement.style.overflow = "hidden";
-    var window = electron.remote.getCurrentWindow();
+    let window = electron.remote.getCurrentWindow();
     window.setFullScreen(true);
-    var url = imglist[currentBg].toDataURL();
+    let url = imglist[currentBg].toDataURL();
     visibleImages("hidden");
     flipbg();
     isFullscreen = true;
@@ -179,7 +180,7 @@ function enableOverview(){
     visibleImages("visible");
     main.style.background = "";
     isFullscreen = false;
-    var window = electron.remote.getCurrentWindow();
+    let window = electron.remote.getCurrentWindow();
     window.setFullScreen(false);
     console.log(isFullscreen);
     currentBg = 0;
@@ -188,19 +189,19 @@ function enableOverview(){
 
 function selectMode(){
     function changeCursor(cursor){
-        for(var i = 0; i < layerlist.length; i++){
-            var layer = layerlist[i];
+        for(let i = 0; i < layerlist.length; i++){
+            let layer = layerlist[i];
             layer.style.cursor = cursor;
         }
     }
     if(imglist != undefined && imglist.length > 0){
-        var layercanvas = $('.layercanvas');
-        var startx;
-        var starty;
-        var currx;
-        var curry;
-        var c;
-        var ctx;
+        let layercanvas = $('.layercanvas');
+        let startx;
+        let starty;
+        let currx;
+        let curry;
+        let c;
+        let ctx;
         changeCursor("crosshair");
         layercanvas.mousedown(function(e){
             startx = e.offsetX;
@@ -212,13 +213,13 @@ function selectMode(){
                 ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
             }
         })
-        layercanvas.mouseup(function(e){
+        layercanvas.mouseup(function(){
             ctx = $(this)[0].getContext('2d');
             c = $(this)[0];
             $(this).data('mouseheld', false);
             if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
-                var imgcanvas = $(this).siblings()[0];
-                var imgcanvasctx = imgcanvas.getContext('2d');
+                let imgcanvas = $(this).siblings()[0];
+                let imgcanvasctx = imgcanvas.getContext('2d');
                 currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
                 lastModifiedCanvas = $(this)[0];
             } else {
@@ -229,7 +230,7 @@ function selectMode(){
             currx = null;
             curry = null;
         })
-        layercanvas.mouseleave(function(e){
+        layercanvas.mouseleave(function(){
             if($(this).data('mouseheld')){
                 ctx = $(this)[0].getContext('2d');
                 ctx.beginPath();
@@ -266,7 +267,7 @@ ipcRenderer.on('image-msg', (event, fileName) => {
 
 $('.container').on("mousedown","img", function (e) {
     e.preventDefault();
-    var target = e.target; //TODO add dragging functionality
+    let target = e.target; //TODO add dragging functionality
 });
 
 $('nav').on("click", "a", function(e) {
@@ -296,10 +297,13 @@ $('#tipcol').on("click", function(e) {
 })
 
 $( document ).ready(function (){
+    globalcanvas = document.createElement("canvas");
+    globalcanvas.id = "globalcanvas";
     main = document.getElementsByTagName("main")[0];
     header = document.getElementById("#header");
     zoominfo = document.getElementById("zoom")
     cardarea = document.getElementById("tipcol");
+    main.appendChild(globalcanvas);
     createCardObj("Press [O] to open an image", ['Ok, got it!']);
     displayTip();
     createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
