@@ -1,4 +1,6 @@
 const {dialog} = require('electron').remote;
+const prompt = require('electron-prompt');
+let socket = io.connect('https://shoumiserver.herokuapp.com');
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
 let header;
@@ -15,7 +17,7 @@ let cards = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 let globalcanvas;
-
+let users = [];
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -32,8 +34,8 @@ document.onkeydown = function(event) {
         enableOverview();
     }
     else if (event.key === "Enter" && (currentSelection !== null && currentSelection !== 'undefined')){
-            clearSelection();
-            duplicateSelection();
+        clearSelection();
+        duplicateSelection();
     }
 
 }
@@ -168,7 +170,6 @@ function enableFullscreen(){
     document.documentElement.style.overflow = "hidden";
     let window = electron.remote.getCurrentWindow();
     window.setFullScreen(true);
-    let url = imglist[currentBg].toDataURL();
     visibleImages("hidden");
     flipbg();
     isFullscreen = true;
@@ -184,6 +185,27 @@ function enableOverview(){
     window.setFullScreen(false);
     console.log(isFullscreen);
     currentBg = 0;
+}
+
+function requestConnection(){
+    prompt({
+        title: 'Choose a peer',
+        label: 'Target ID: ',
+        value: 'http://example.org',
+        type: 'select',
+        selectOptions: users // also adds the clients own ID to list, needs fix
+    })
+        .then((r) => {
+            if(r === null) {
+                console.log('user cancelled');
+            } else {
+                console.log('Chosen peer: ', users[r]);
+                socket.emit('connectionrequest', {
+                    destpeer: users[r]
+                });
+            }
+        })
+        .catch(console.error);
 }
 
 
@@ -283,9 +305,11 @@ $('nav').on("click", "a", function(e) {
 
 $('#toolarea').on("click", '.toolbtn', function(e) {
     e.preventDefault();
-    console.log(e.target.id);
     if(e.target.id === 'selectbtn'){
         selectMode();
+    }
+    if(e.target.id == 'p2pbtn'){
+        requestConnection();
     }
 })
 
@@ -301,10 +325,50 @@ $( document ).ready(function (){
     globalcanvas.id = "globalcanvas";
     main = document.getElementsByTagName("main")[0];
     header = document.getElementById("#header");
-    zoominfo = document.getElementById("zoom")
+    zoominfo = document.getElementById("zoom");
     cardarea = document.getElementById("tipcol");
     main.appendChild(globalcanvas);
     createCardObj("Press [O] to open an image", ['Ok, got it!']);
     displayTip();
     createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
+});
+
+socket.on('newuser', function(data) {
+    console.log("User has connected!");
+    let userString = "";
+    users = data.userlist;
+    for(let i = 0; i < users.length; i++){
+        userString += (i+1 + "User: " + users[i] + "\n");
+    }
+    console.log(userString);
+});
+
+socket.on('userleft',function(data) {
+    console.log("User has disconnected!");
+    let userString = "";
+    users = data.userlist;
+    for(let i = 0; i < users.length; i++){
+        userString += (i+1 + ": User: " + users[i] + "\n");
+    }
+    console.log(userString);
+});
+
+socket.on('broadcast',function(data) {
+    console.log(data.description);
+});
+
+socket.on('connectionsuccess', function(data){
+    alert("You are now connected with user + " + data.user + ", now kiss!!!!!");
 })
+
+socket.on('connectiondenied', function(){
+    alert("Your connection request has been denied by the recipient");
+});
+
+socket.on('confirmrequest', function(data) {
+    let request = confirm("User: " + data.user + " has requested to join a session with you.");
+    socket.emit('connectionreply', {
+        approved: request
+    });
+});
+

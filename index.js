@@ -1,6 +1,5 @@
 const {app, BrowserWindow} = require('electron');
 const {ipcMain} = require ('electron');
-
 let window;
 let template = 'index.html';
 let fileName;
@@ -35,5 +34,7 @@ app.on('ready', () => {
         }
     })
 });
+
+
 
 

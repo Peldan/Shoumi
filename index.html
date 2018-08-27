@@ -13,7 +13,7 @@
 <header>
 <nav class="nav-extended">
     <div class="nav-wrapper">
-        <a href="" class="brand-logo">Shoumi</a>
+        <a href="" class="brand-logo">Shoumi - © 2018 Arvid Peldán</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
             <li><a id="fullscreen">Fullscreen</a></li>
             <li><a id="overview">Overview</a></li>
@@ -22,7 +22,7 @@
     <div class="nav-content">
             <ul id="toolarea" class="tabs tabs-transparent">
                 <li><a><i id="selectbtn" class="toolbtn tiny material-icons">select_all</i></a></li>
-                <li><a><i class="toolbtn tiny material-icons">cloud</i></a></li>
+                <li><a><i id="p2pbtn" class="toolbtn tiny material-icons">cloud</i></a></li>
             </ul>
     </div>
 </nav>
@@ -45,6 +45,7 @@
 
         <div class="row center-align" id="mainrow">
             <div class="col s12">
+
                 <div id="bild" class="center-align">
 
                 </div>
@@ -56,6 +57,7 @@
 </body>
 <script type=text/javascript src="index.js"></script>
 <script type="text/javascript" src="js/materialize.min.js"></script>
+<script type="text/javascript" src="https://shoumiserver.herokuapp.com/socket.io/socket.io.js"></script>
 <script>
     require('./renderer.js')
 </script>
