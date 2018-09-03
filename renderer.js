@@ -18,6 +18,10 @@ let $ = require("jquery");
 let imgdiv = $('#bild');
 let globalcanvas;
 let users = [];
+let didRequest = false;
+let isConnected = false;
+let connectedTo = null;
+let rooms = [];
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -133,9 +137,6 @@ function displayImage(fileNames) {
     });
     imglist = document.getElementsByClassName('imgcanvas');
     layerlist = document.getElementsByClassName('layercanvas');
-    console.log(imglist[0].id);
-    console.log(imglist.length);
-    console.log(fileNames.length);
 }
 
 function createCardObj(text, options){
@@ -155,7 +156,6 @@ function openDialog() {
         if (fileNames === undefined) {
             return;
         }
-        console.log(fileNames);
         displayImage(fileNames);
     })
 }
@@ -183,29 +183,41 @@ function enableOverview(){
     isFullscreen = false;
     let window = electron.remote.getCurrentWindow();
     window.setFullScreen(false);
-    console.log(isFullscreen);
     currentBg = 0;
 }
 
 function requestConnection(){
-    prompt({
-        title: 'Choose a peer',
-        label: 'Target ID: ',
-        value: 'http://example.org',
-        type: 'select',
-        selectOptions: users // also adds the clients own ID to list, needs fix
-    })
-        .then((r) => {
-            if(r === null) {
-                console.log('user cancelled');
-            } else {
-                console.log('Chosen peer: ', users[r]);
-                socket.emit('connectionrequest', {
-                    destpeer: users[r]
-                });
-            }
+    users.splice(socket.id, 1);
+    if(!isConnected) {
+        prompt({
+            title: 'Choose a peer',
+            label: 'Target ID: ',
+            value: 'http://example.org',
+            type: 'select',
+            selectOptions: users
         })
-        .catch(console.error);
+            .then((r) => {
+                if (r === null) {
+                    console.log('user cancelled');
+                } else {
+                    console.log('Chosen peer: ', users[r]);
+                    socket.emit('connectionrequest', {
+                        destpeer: users[r]
+                    });
+                    console.log(users[r]);
+                    didRequest = true;
+                }
+            })
+            .catch(console.error);
+    } else {
+        confirm("You are currently connected to " + connectedTo);
+    }
+}
+
+function sharePhotos(){
+    socket.emit('requestrooms', function(error, data){
+        console.log(data);
+    });
 }
 
 
@@ -294,7 +306,6 @@ $('.container').on("mousedown","img", function (e) {
 
 $('nav').on("click", "a", function(e) {
     e.preventDefault();
-    console.log(e.target.id)
     if(e.target.id === 'fullscreen'){
         enableFullscreen();
     }
@@ -311,6 +322,9 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     if(e.target.id == 'p2pbtn'){
         requestConnection();
     }
+    if(e.target.id == 'sharebtn') {
+        sharePhotos();
+    }
 })
 
 $('#tipcol').on("click", function(e) {
@@ -318,7 +332,7 @@ $('#tipcol').on("click", function(e) {
     if(e.target.id === 'btn') {
         $('.card*').remove();
     }
-})
+});
 
 $( document ).ready(function (){
     globalcanvas = document.createElement("canvas");
@@ -358,11 +372,14 @@ socket.on('broadcast',function(data) {
 });
 
 socket.on('connectionsuccess', function(data){
-    alert("You are now connected with user + " + data.user + ", now kiss!!!!!");
-})
-
-socket.on('connectiondenied', function(){
-    alert("Your connection request has been denied by the recipient");
+    if(didRequest) {
+        alert("You are now connected with user " + data.dest + ", now kiss!!!!!");
+    } else {
+        alert("You are now connected with user " + data.requestee + ", now kiss!!!!!");
+    }
+    didRequest = false;
+    isConnected = true;
+    connectedTo = data.dest;
 });
 
 socket.on('confirmrequest', function(data) {
