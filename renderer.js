@@ -1,5 +1,6 @@
 const {dialog} = require('electron').remote;
 const prompt = require('electron-prompt');
+const fs = require('fs');
 let socket = io.connect('https://shoumiserver.herokuapp.com');
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
@@ -10,8 +11,9 @@ let isFullscreen = false;
 let currentSelection;
 let lastModifiedCanvas;
 let currentBg = 0;
-let imglist;
-let layerlist;
+let imgCanvasList;
+let layerCanvasList;
+let imglist = [];
 let main;
 let cards = [];
 let $ = require("jquery");
@@ -21,7 +23,7 @@ let users = [];
 let didRequest = false;
 let isConnected = false;
 let connectedTo = null;
-let rooms = [];
+let toDelete = [];
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -57,14 +59,13 @@ function duplicateSelection() {
     })
 }
 
-
-function flipbg(forward){
-    if(currentBg === (imglist.length)){
+function flipbg(){
+    if(currentBg === (imgCanvasList.length)){
         createCardObj('You have reached the end of your imported images!', ['Ok, got it!']);
         displayTip();
         return;
     }
-    let url = imglist[currentBg].toDataURL();
+    let url = imgCanvasList[currentBg].toDataURL();
     main.style.backgroundImage = "url('" + url + "')";
     main.style.backgroundRepeat = "no-repeat";
     main.style.backgroundPosition = 'center top';
@@ -100,11 +101,15 @@ function displayTip(){
     }
 }
 
-function displayImage(fileNames) {
+function b64(e){let t="";let n=new Uint8Array(e);let r=n.byteLength;for(let i=0;i<r;i++){t+=String.fromCharCode(n[i])}return window.btoa(t)}
+
+
+function displayImage(fileNames, isShared) {
     const checkbox = document.getElementById("continuous");
     fileNames.forEach(function(file){
         const img = new Image();
-        img.src = file;
+        img.src = (isShared) ? ("data:image/png;base64," + b64(file.buffer)) : file;
+        imglist.push(file);
         if (checkbox != null && checkbox.checked) {
             ipcRenderer.send('asynchronous-message', 'window-requested', file);
         } else {
@@ -112,14 +117,14 @@ function displayImage(fileNames) {
             let secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
             let ctx = firstCanvas.getContext('2d');
             firstCanvas.className = 'imgcanvas';
-            secondCanvas.className = 'layercanvas'
-            let newrow = document.createElement('div');
-            newrow.className = 'row center-align cr';
-            imgdiv.append(newrow);
+            secondCanvas.className = 'layercanvas';
             firstCanvas.width = 1000;
             firstCanvas.height = 800;
             secondCanvas.width = firstCanvas.width;
             secondCanvas.height = firstCanvas.height;
+            let newrow = document.createElement('div');
+            newrow.className = 'row center-align cr';
+            imgdiv.append(newrow);
             newrow.style.marginBottom = firstCanvas.height + "px";
             img.onload = function(){
                 let wratio = firstCanvas.width / img.width;
@@ -135,8 +140,21 @@ function displayImage(fileNames) {
             newrow.appendChild(secondCanvas);
         }
     });
-    imglist = document.getElementsByClassName('imgcanvas');
-    layerlist = document.getElementsByClassName('layercanvas');
+    imgCanvasList = document.getElementsByClassName('imgcanvas');
+    layerCanvasList = document.getElementsByClassName('layercanvas');
+    $('.layercanvas').click(function(){
+        var target = $(this);
+        if(target.css('border') !== "2px solid rgb(255, 0, 0)"){
+            $(this).css('border', "solid 2px red");
+            toDelete.push(target);
+            toDelete.push(target.siblings(".imgcanvas"));
+        } else {
+            $(this).css('border', "solid 0px red");
+            toDelete.splice(target, 1);
+            toDelete.splice(target.siblings(".imgcanvas"), 1);
+        }
+        console.log(toDelete);
+    })
 }
 
 function createCardObj(text, options){
@@ -156,13 +174,13 @@ function openDialog() {
         if (fileNames === undefined) {
             return;
         }
-        displayImage(fileNames);
+        displayImage(fileNames, false);
     })
 }
 
 function visibleImages(visibility){
-    for(let i = 0; i < imglist.length; i++){
-        imglist[i].style.visibility = visibility;
+    for(let i = 0; i < imgCanvasList.length; i++){
+        imgCanvasList[i].style.visibility = visibility;
     }
 }
 
@@ -187,7 +205,6 @@ function enableOverview(){
 }
 
 function requestConnection(){
-    users.splice(socket.id, 1);
     if(!isConnected) {
         prompt({
             title: 'Choose a peer',
@@ -215,20 +232,33 @@ function requestConnection(){
 }
 
 function sharePhotos(){
-    socket.emit('requestrooms', function(error, data){
-        console.log(data);
+    for(let i = 0; i < imglist.length; i++){
+        fs.readFile(imglist[i], function(err, data){
+            socket.emit('imgByClient', { image: true, buffer: data });
+        });
+    }
+/*    fs.readFile(imglist[0], function(err, data){
+        socket.emit('imgByClient', { image: true, buffer: data });
+    });*/
+}
+
+function deleteSelected(){
+    toDelete.forEach(function(element){
+        let obj = $(element);
+        obj.remove();
     });
+    toDelete = [];
 }
 
 
 function selectMode(){
     function changeCursor(cursor){
-        for(let i = 0; i < layerlist.length; i++){
-            let layer = layerlist[i];
+        for(let i = 0; i < layerCanvasList.length; i++){
+            let layer = layerCanvasList[i];
             layer.style.cursor = cursor;
         }
     }
-    if(imglist != undefined && imglist.length > 0){
+    if(imgCanvasList != undefined && imgCanvasList.length > 0){
         let layercanvas = $('.layercanvas');
         let startx;
         let starty;
@@ -299,10 +329,6 @@ ipcRenderer.on('image-msg', (event, fileName) => {
     imgdiv.appendChild(img);
 });
 
-$('.container').on("mousedown","img", function (e) {
-    e.preventDefault();
-    let target = e.target; //TODO add dragging functionality
-});
 
 $('nav').on("click", "a", function(e) {
     e.preventDefault();
@@ -324,6 +350,9 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     }
     if(e.target.id == 'sharebtn') {
         sharePhotos();
+    }
+    if(e.target.id == 'deletebtn') {
+        deleteSelected();
     }
 })
 
@@ -387,5 +416,10 @@ socket.on('confirmrequest', function(data) {
     socket.emit('connectionreply', {
         approved: request
     });
+});
+
+socket.on('imgByClient', function(data) {
+    let fileNames = [data];
+    displayImage(fileNames, true);
 });
 
