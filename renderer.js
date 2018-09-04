@@ -237,9 +237,6 @@ function sharePhotos(){
             socket.emit('imgByClient', { image: true, buffer: data });
         });
     }
-/*    fs.readFile(imglist[0], function(err, data){
-        socket.emit('imgByClient', { image: true, buffer: data });
-    });*/
 }
 
 function deleteSelected(){
