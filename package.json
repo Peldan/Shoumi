@@ -2,7 +2,7 @@
   "name": "Shoumi",
   "version": "1.0.0",
   "description": "index.js är main-process",
-  "main": "index.js",
+  "main": "js/index.js",
   "dependencies": {
     "electron-prompt": "^1.1.0-1",
     "jquery": "^3.3.1",
