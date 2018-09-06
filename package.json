@@ -1,6 +1,6 @@
 {
   "name": "Shoumi",
-  "version": "1.0.0",
+  "version": "1.1",
   "description": "index.js är main-process",
   "main": "js/index.js",
   "dependencies": {
