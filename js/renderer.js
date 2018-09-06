@@ -24,6 +24,7 @@ let didRequest = false;
 let isConnected = false;
 let connectedTo = null;
 let toDelete = [];
+let chosenName = null;
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -43,7 +44,6 @@ document.onkeydown = function(event) {
         clearSelection();
         duplicateSelection();
     }
-
 }
 
 function clearSelection(){
@@ -205,37 +205,46 @@ function enableOverview(){
 }
 
 function requestConnection(){
-    if(!isConnected) {
-        prompt({
-            title: 'Choose a peer',
-            label: 'Target ID: ',
-            value: 'http://example.org',
-            type: 'select',
-            selectOptions: users
-        })
-            .then((r) => {
-                if (r === null) {
-                    console.log('user cancelled');
-                } else {
-                    console.log('Chosen peer: ', users[r]);
-                    socket.emit('connectionrequest', {
-                        destpeer: users[r]
-                    });
-                    console.log(users[r]);
-                    didRequest = true;
-                }
+    users = [];
+    socket.emit('requestclients', (error, data) => {
+        users = data;
+        let customIds = [];
+        users.forEach((user) => {
+            customIds.push(user.customId);
+        });
+        console.log("Users:" + users);
+        console.log("Custom ids: " + customIds);
+        if(!isConnected) {
+            prompt({
+                title: 'Choose a peer',
+                label: 'Target ID: ',
+                value: 'http://example.org',
+                type: 'select',
+                selectOptions: customIds
             })
-            .catch(console.error);
-    } else {
-        confirm("You are currently connected to " + connectedTo);
-    }
+                .then((r) => {
+                    if (r === null) {
+                        console.log('user cancelled');
+                    } else {
+                        didRequest = true;
+                        console.log('Chosen peer: ', users[r].customId + " with ID: " + users[r].clientId);
+                        socket.emit('connectionrequest', {
+                            destpeer: users[r]
+                        });
+                    }
+                })
+                .catch(console.error);
+        } else {
+            confirm("You are currently connected to " + connectedTo);
+        }
+    });
 }
 
 function sharePhotos(){
     for(let i = 0; i < imglist.length; i++){
-        fs.readFile(imglist[i], function(err, data){
-            socket.emit('imgByClient', { image: true, buffer: data });
-        });
+            fs.readFile(imglist[i], function(err, data){
+                socket.emit('imgByClient', { image: true, buffer: data });
+            });
     }
 }
 
@@ -245,6 +254,24 @@ function deleteSelected(){
         obj.remove();
     });
     toDelete = [];
+}
+
+function enterName(){
+    prompt({
+        title: 'Enter your name',
+        label: 'Name: ',
+    })
+        .then((input) => {
+            if (input === null) {
+                console.log('user cancelled');
+            } else {
+                chosenName = input;
+                socket.emit('customClientInfo', {
+                    customId: input,
+                });
+            }
+        })
+        .catch(console.error);
 }
 
 
@@ -361,6 +388,7 @@ $('#tipcol').on("click", function(e) {
 });
 
 $( document ).ready(function (){
+    enterName();
     globalcanvas = document.createElement("canvas");
     globalcanvas.id = "globalcanvas";
     main = document.getElementsByTagName("main")[0];
@@ -374,13 +402,7 @@ $( document ).ready(function (){
 });
 
 socket.on('newuser', function(data) {
-    console.log("User has connected!");
-    let userString = "";
     users = data.userlist;
-    for(let i = 0; i < users.length; i++){
-        userString += (i+1 + "User: " + users[i] + "\n");
-    }
-    console.log(userString);
 });
 
 socket.on('userleft',function(data) {
@@ -398,14 +420,15 @@ socket.on('broadcast',function(data) {
 });
 
 socket.on('connectionsuccess', function(data){
+    console.log("Did request: " + didRequest);
     if(didRequest) {
-        alert("You are now connected with user " + data.dest + ", now kiss!!!!!");
+        alert("You are now connected with user " + data.dest.customId + ", now kiss!!!!!");
     } else {
-        alert("You are now connected with user " + data.requestee + ", now kiss!!!!!");
+        alert("You are now connected with user " + data.requestee.customId + ", now kiss!!!!!");
     }
     didRequest = false;
     isConnected = true;
-    connectedTo = data.dest;
+    connectedTo = data.dest.clientId;
 });
 
 socket.on('confirmrequest', function(data) {
@@ -419,4 +442,9 @@ socket.on('imgByClient', function(data) {
     let fileNames = [data];
     displayImage(fileNames, true);
 });
+
+socket.on('requestConnectedTo', function(callback) {
+    callback(null, connectedTo);
+})
+
 

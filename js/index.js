@@ -1,5 +1,6 @@
-const {app, BrowserWindow, Menu, Tray} = require('electron');
-const {ipcMain} = require ('electron');
+const { app, BrowserWindow, Menu, Tray } = require('electron');
+const { autoUpdater } = require('electron-updater');
+
 let window;
 let template = 'index.html';
 let fileName;
@@ -24,13 +25,6 @@ function createWindow(){
             window.hide();
         }
     });
-
-}
-
-function setupNewWindow(name){
-    fileName = name;
-    template = 'imagevwr.html';
-    createWindow();
 }
 
 app.on('ready', () => {
@@ -47,13 +41,7 @@ app.on('ready', () => {
     ])
     tray.setToolTip("Shoumi - Image viewer");
     tray.setContextMenu(contextMenu);
-    ipcMain.on('asynchronous-message', (event, arg, fileName) => {
-        if (arg === 'window-requested') {
-            setupNewWindow(fileName);
-        } else {
-            event.sender.send('asynchronous-reply', 'unrecognized-args');
-        }
-    })
+    autoUpdater.checkForUpdatesAndNotify();
 });
 
 
