@@ -1,6 +1,6 @@
 {
   "name": "Shoumi",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "An image viewer with networking",
   "main": "js/index.js",
   "dependencies": {

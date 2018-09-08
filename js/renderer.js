@@ -151,8 +151,8 @@ function displayImage(fileNames, isShared) {
             toDelete.push(target.siblings(".imgcanvas"));
         } else {
             $(this).css('border', "solid 0px red");
-            toDelete.splice(target, 1);
-            toDelete.splice(target.siblings(".imgcanvas"), 1);
+            toDelete.splice(toDelete.indexOf(target), 1);
+            toDelete.splice(toDelete.indexOf(target.siblings(".imgcanvas")), 1);
         }
         console.log(toDelete);
     })
@@ -215,7 +215,6 @@ function requestConnection(){
         users.forEach((user) => {
             customIds.push(user.customId);
         });
-        console.log("Users:" + users);
         console.log("Custom ids: " + customIds);
         if(!isConnected) {
             prompt({
@@ -244,11 +243,6 @@ function requestConnection(){
 }
 
 function sharePhotos(){
-/*    for(let i = 0; i < fileNames.length; i++){
-            fs.readFile(fileNames[i], function(err, data){
-                socket.emit('imgByClient', { image: true, buffer: data });
-            });
-    }*/
     for(let i = 0; i < images.length; i++) {
         fs.readFile(images[i].file, function(err, data){
             if(!images[i].isShared){
@@ -404,7 +398,6 @@ $( document ).ready(function (){
     globalcanvas.id = "globalcanvas";
     main = document.getElementsByTagName("main")[0];
     header = document.getElementById("#header");
-    zoominfo = document.getElementById("zoom");
     cardarea = document.getElementById("tipcol");
     main.appendChild(globalcanvas);
     createCardObj("Press [O] to open an image", ['Ok, got it!']);
@@ -420,13 +413,7 @@ socket.on('newuser', function(data) {
 });
 
 socket.on('userleft',function(data) {
-    console.log("User has disconnected!");
-    let userString = "";
     users = data.userlist;
-    for(let i = 0; i < users.length; i++){
-        userString += (i+1 + ": User: " + users[i] + "\n");
-    }
-    console.log(userString);
 });
 
 socket.on('broadcast',function(data) {
