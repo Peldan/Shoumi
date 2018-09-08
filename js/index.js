@@ -17,7 +17,9 @@ autoUpdater.logger.transports.file.level = 'info';
 function createWindow(){
     window = new BrowserWindow({width: 880, height: 390});
     window.loadFile(template);
-    window.webContents.openDevTools();
+    if(isDev){
+        window.webContents.openDevTools();
+    }
     if(typeof fileName !== "undefined"){
         window.webContents.on('did-finish-load', () => {
             window.webContents.send('image-msg', fileName);
@@ -28,7 +30,7 @@ function createWindow(){
         window.hide();
     });
 
-    window.on('close', (event) => {
+    window.on('close', () => {
         window = null;
         app.quit();
     });
@@ -65,13 +67,11 @@ autoUpdater.on('checking-for-update', () => {
 });
 
 autoUpdater.on('update-available', (info) => {
-    alert("Update available");
     console.log("Update available");
     console.log("Version: " + info.version);
 });
 
 autoUpdater.on('update-not-available', () => {
-    alert("No updates available");
     console.log("Update not available");
 });
 
