@@ -1,6 +1,7 @@
 const {dialog} = require('electron').remote;
 const prompt = require('electron-prompt');
 const fs = require('fs');
+const notifier = require('node-notifier');
 let socket = io.connect('https://shoumiserver.herokuapp.com');
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
@@ -18,7 +19,6 @@ let users = [];
 let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
-
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -102,7 +102,6 @@ function createImageObject(src, isShared){
     imageObj.file = src;
     imageObj.isShared = isShared;
     imageObj.isSelected = false;
-    console.log("Created image object, src: " + imageObj.file);
     images.push(imageObj);
 }
 
@@ -138,9 +137,6 @@ function displayImage(fileNames, isShared) {
         newrow.appendChild(firstCanvas);
         newrow.appendChild(secondCanvas);
     });
-    console.log("All images added." + " Object count: " + images.length + " Filename count: " + fileNames.length);
-    console.log(images);
-    console.log(fileNames);
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
     $('.layercanvas').click(function(){
@@ -386,6 +382,12 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     }
 })
 
+socket.on('connect', () => {
+    socket.emit('customClientInfo', {
+        customId: "Unnamed Shoumi-client: " + socket.id
+    })
+})
+
 $('#tipcol').on("click", function(e) {
     e.preventDefault();
     if(e.target.id === 'btn') {
@@ -408,9 +410,6 @@ $( document ).ready(function (){
 
 socket.on('newuser', function(data) {
     users = data.userlist;
-    let myNotification = new Notification('New user', {
-        body: users[users.length - 1].customId + ' has connected!'
-    })
 });
 
 socket.on('userleft',function(data) {
@@ -437,9 +436,7 @@ socket.on('connectionsuccess', function(data){
 socket.on('imgByClient', function(data) {
     let fileNames = [data];
     displayImage(fileNames, true);
-    let myNotification = new Notification('New image', {
-        body: connectedTo + ' has shared an image with you!'
-    })
+    notifier.notify('Image received from ' + connectedTo.customId);
 });
 
 socket.on('requestConnectedTo', function(callback) {

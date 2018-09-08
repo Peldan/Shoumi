@@ -10,6 +10,7 @@
     "electron-updater": "^3.1.2",
     "jquery": "^3.3.1",
     "materialize-css": "^1.0.0-rc.2",
+    "node-notifier": "^5.2.1",
     "nodejs": "0.0.0",
     "peer": "^0.2.10",
     "pg": "^7.4.3",
@@ -27,7 +28,6 @@
         }
       ],
       "extraResources": {
-        "from": "./build/trayicon.png",
         "from": "./build/icon.ico",
         "to": "."
       }
