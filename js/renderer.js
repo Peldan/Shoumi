@@ -19,6 +19,7 @@ let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 
+//TODO Uppdatera bildernas position när man tar bort bilder, lämnar luckor
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -243,10 +244,18 @@ function requestConnection(){
 }
 
 function sharePhotos(){
-    for(let i = 0; i < fileNames.length; i++){
+/*    for(let i = 0; i < fileNames.length; i++){
             fs.readFile(fileNames[i], function(err, data){
                 socket.emit('imgByClient', { image: true, buffer: data });
             });
+    }*/
+    for(let i = 0; i < images.length; i++) {
+        fs.readFile(images[i].file, function(err, data){
+            if(!images[i].isShared){
+                images[i].isShared = true;
+                socket.emit('imgByClient', { image: true, buffer: data});
+            }
+        });
     }
 }
 
