@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, Tray } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const isDev = require('electron-is-dev');
 const log = require('electron-log');
+require('electron-reload')(__dirname);
 log.transports.file.level = "info";
 let window;
 let template = 'index.html';

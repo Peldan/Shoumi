@@ -1,5 +1,6 @@
 const {dialog} = require('electron').remote;
 const prompt = require('electron-prompt');
+const isDev = require('electron-is-dev');
 const fs = require('fs');
 const notifier = require('node-notifier');
 let socket = io.connect('https://shoumiserver.herokuapp.com');
@@ -13,12 +14,13 @@ let isConnected = false;
 let connectedTo = null;
 let chosenName = null;
 let toDelete = [];
-let fileNames = [];
 let infoCards = [];
 let users = [];
 let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
+
+//TODO fix bug where the topmost shared photo cannot be selected
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -139,9 +141,12 @@ function displayImage(fileNames, isShared) {
     });
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
-    $('.layercanvas').click(function(){
+    $('.layercanvas').click(function(evt){
+        evt.preventDefault();
+        evt.stopPropagation();
         let target = $(this);
-        if(target.css('border') !== "2px solid rgb(255, 0, 0)"){
+        console.log("Click!");
+        if(target.css('border') !== "2px solid rgb(255, 0, 0)" || target.css('border') == null){
             $(this).css('border', "solid 2px red");
             toDelete.push(target);
             toDelete.push(target.siblings(".imgcanvas"));
@@ -161,7 +166,6 @@ function createCardObj(text, options){
 }
 
 function openDialog() {
-    console.log(fileNames.length);
     dialog.showOpenDialog({
         properties: ["openFile", "multiSelections"],
         filters: [
@@ -242,7 +246,7 @@ function sharePhotos(){
         fs.readFile(images[i].file, function(err, data){
             if(!images[i].isShared){
                 images[i].isShared = true;
-                socket.emit('imgByClient', { image: true, buffer: data});
+                socket.emit('imgByClient', { image: true, buffer: data });
             }
         });
     }
@@ -382,12 +386,6 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     }
 })
 
-socket.on('connect', () => {
-    socket.emit('customClientInfo', {
-        customId: "Unnamed Shoumi-client: " + socket.id
-    })
-})
-
 $('#tipcol').on("click", function(e) {
     e.preventDefault();
     if(e.target.id === 'btn') {
@@ -436,7 +434,12 @@ socket.on('connectionsuccess', function(data){
 socket.on('imgByClient', function(data) {
     let fileNames = [data];
     displayImage(fileNames, true);
-    notifier.notify('Image received from ' + connectedTo.customId);
+    notifier.notify({
+        title: 'Image received',
+        message: 'Image received from ' + connectedTo.customId,
+        icon: (isDev) ? './build/icon.ico' : process.resourcesPath + '\\icon.ico',
+        id: 'com.example.shoumi',
+    });
 });
 
 socket.on('requestConnectedTo', function(callback) {
