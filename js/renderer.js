@@ -19,7 +19,6 @@ let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 
-//TODO Uppdatera bildernas position när man tar bort bilder, lämnar luckor
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -102,6 +101,7 @@ function createImageObject(src, isShared){
     let imageObj = new Object();
     imageObj.file = src;
     imageObj.isShared = isShared;
+    imageObj.isSelected = false;
     console.log("Created image object, src: " + imageObj.file);
     images.push(imageObj);
 }
@@ -154,7 +154,6 @@ function displayImage(fileNames, isShared) {
             toDelete.splice(toDelete.indexOf(target), 1);
             toDelete.splice(toDelete.indexOf(target.siblings(".imgcanvas")), 1);
         }
-        console.log(toDelete);
     })
 }
 
@@ -256,7 +255,9 @@ function sharePhotos(){
 function deleteSelected(){
     toDelete.forEach(function(element){
         let obj = $(element);
+        let objParent = $(element).parent();
         obj.remove();
+        objParent.remove();
     });
     toDelete = [];
 }
