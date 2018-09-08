@@ -4,27 +4,21 @@ const fs = require('fs');
 let socket = io.connect('https://shoumiserver.herokuapp.com');
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
-let header;
-let zoominfo;
-let cardarea;
-let isFullscreen = false;
-let currentSelection;
-let lastModifiedCanvas;
+let header, cardarea, currentSelection, lastModifiedCanvas, imgCanvasList, layerCanvasList, main, globalcanvas;
 let currentBg = 0;
-let imgCanvasList;
-let layerCanvasList;
-let imglist = [];
-let main;
-let cards = [];
-let $ = require("jquery");
-let imgdiv = $('#bild');
-let globalcanvas;
-let users = [];
+let isFullscreen = false;
 let didRequest = false;
 let isConnected = false;
 let connectedTo = null;
-let toDelete = [];
 let chosenName = null;
+let toDelete = [];
+let fileNames = [];
+let infoCards = [];
+let users = [];
+let images = [];
+let $ = require("jquery");
+let imgdiv = $('#bild');
+
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -74,7 +68,7 @@ function flipbg(){
 }
 
 function displayTip(){
-    let cardobj = cards[cards.length - 1];
+    let cardobj = infoCards[infoCards.length - 1];
     if(!cardobj.isRead) {
         let tiparea = document.getElementById("tipcol");
         let card = document.createElement("div");
@@ -103,47 +97,53 @@ function displayTip(){
 
 function b64(e){let t="";let n=new Uint8Array(e);let r=n.byteLength;for(let i=0;i<r;i++){t+=String.fromCharCode(n[i])}return window.btoa(t)}
 
+function createImageObject(src, isShared){
+    let imageObj = new Object();
+    imageObj.file = src;
+    imageObj.isShared = isShared;
+    console.log("Created image object, src: " + imageObj.file);
+    images.push(imageObj);
+}
 
 function displayImage(fileNames, isShared) {
-    const checkbox = document.getElementById("continuous");
     fileNames.forEach(function(file){
+        let src = (isShared) ? ("data:image/png;base64," + b64(file.buffer)) : file;
+        createImageObject(src, isShared);
         const img = new Image();
-        img.src = (isShared) ? ("data:image/png;base64," + b64(file.buffer)) : file;
-        imglist.push(file);
-        if (checkbox != null && checkbox.checked) {
-            ipcRenderer.send('asynchronous-message', 'window-requested', file);
-        } else {
-            let firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
-            let secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
-            let ctx = firstCanvas.getContext('2d');
-            firstCanvas.className = 'imgcanvas';
-            secondCanvas.className = 'layercanvas';
-            firstCanvas.width = 1000;
-            firstCanvas.height = 800;
-            secondCanvas.width = firstCanvas.width;
-            secondCanvas.height = firstCanvas.height;
-            let newrow = document.createElement('div');
-            newrow.className = 'row center-align cr';
-            imgdiv.append(newrow);
-            newrow.style.marginBottom = firstCanvas.height + "px";
-            img.onload = function(){
-                let wratio = firstCanvas.width / img.width;
-                let hratio = firstCanvas.height / img.height;
-                let ratio  = Math.min ( wratio, hratio );
-                let centerx = ( firstCanvas.width - img.width*ratio ) / 2;
-                let centery = ( firstCanvas.height - img.height*ratio ) / 2;
-                ctx.drawImage(img, 0, 0,
-                    img.width, img.height,
-                    centerx, centery, img.width * ratio, img.height * ratio);
-            };
-            newrow.appendChild(firstCanvas);
-            newrow.appendChild(secondCanvas);
-        }
+        img.src = src;
+        let firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
+        let secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
+        let ctx = firstCanvas.getContext('2d');
+        firstCanvas.className = 'imgcanvas';
+        secondCanvas.className = 'layercanvas';
+        firstCanvas.width = 1000;
+        firstCanvas.height = 800;
+        secondCanvas.width = firstCanvas.width;
+        secondCanvas.height = firstCanvas.height;
+        let newrow = document.createElement('div');
+        newrow.className = 'row center-align cr';
+        imgdiv.append(newrow);
+        newrow.style.marginBottom = firstCanvas.height + "px";
+        img.onload = function(){
+            let wratio = firstCanvas.width / img.width;
+            let hratio = firstCanvas.height / img.height;
+            let ratio  = Math.min ( wratio, hratio );
+            let centerx = ( firstCanvas.width - img.width*ratio ) / 2;
+            let centery = ( firstCanvas.height - img.height*ratio ) / 2;
+            ctx.drawImage(img, 0, 0,
+                img.width, img.height,
+                centerx, centery, img.width * ratio, img.height * ratio);
+        };
+        newrow.appendChild(firstCanvas);
+        newrow.appendChild(secondCanvas);
     });
+    console.log("All images added." + " Object count: " + images.length + " Filename count: " + fileNames.length);
+    console.log(images);
+    console.log(fileNames);
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
     $('.layercanvas').click(function(){
-        var target = $(this);
+        let target = $(this);
         if(target.css('border') !== "2px solid rgb(255, 0, 0)"){
             $(this).css('border', "solid 2px red");
             toDelete.push(target);
@@ -160,16 +160,18 @@ function displayImage(fileNames, isShared) {
 function createCardObj(text, options){
     if(typeof text === 'string' && Array.isArray(options)) {
         let card = {text: text, options: options, isRead: false};
-        cards.push(card);
+        infoCards.push(card);
     }
 }
 
 function openDialog() {
+    console.log(fileNames.length);
     dialog.showOpenDialog({
         properties: ["openFile", "multiSelections"],
         filters: [
             {name: "Images", extensions: ["jpg", "png", "gif"]},
-            {name: 'All Files', extensions: ['*']}]
+            {name: 'All Files', extensions: ['*']}
+            ]
     }, fileNames => {
         if (fileNames === undefined) {
             return;
@@ -241,8 +243,8 @@ function requestConnection(){
 }
 
 function sharePhotos(){
-    for(let i = 0; i < imglist.length; i++){
-            fs.readFile(imglist[i], function(err, data){
+    for(let i = 0; i < fileNames.length; i++){
+            fs.readFile(fileNames[i], function(err, data){
                 socket.emit('imgByClient', { image: true, buffer: data });
             });
     }
@@ -434,12 +436,6 @@ socket.on('connectionsuccess', function(data){
     connectedTo = data.dest.clientId;
 });
 
-socket.on('confirmrequest', function(data) {
-    let request = confirm("User: " + data.user + " has requested to join a session with you.");
-    socket.emit('connectionreply', {
-        approved: request
-    });
-});
 
 socket.on('imgByClient', function(data) {
     let fileNames = [data];
