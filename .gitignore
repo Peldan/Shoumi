@@ -1,6 +1,8 @@
 node_modules/
 .idea/
 Shoumi-win32-x64/
+dist
+/
 
 *.7z
 *.dmg

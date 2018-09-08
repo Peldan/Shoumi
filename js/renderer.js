@@ -403,6 +403,9 @@ $( document ).ready(function (){
 
 socket.on('newuser', function(data) {
     users = data.userlist;
+    let myNotification = new Notification('New user', {
+        body: users[users.length - 1].customId + ' has connected!'
+    })
 });
 
 socket.on('userleft',function(data) {
@@ -422,9 +425,9 @@ socket.on('broadcast',function(data) {
 socket.on('connectionsuccess', function(data){
     console.log("Did request: " + didRequest);
     if(didRequest) {
-        alert("You are now connected with user " + data.dest.customId + ", now kiss!!!!!");
+        alert("You are now connected with user " + data.dest.customId);
     } else {
-        alert("You are now connected with user " + data.requestee.customId + ", now kiss!!!!!");
+        alert("User " + data.requestee.customId + " has initiated a connection with you");
     }
     didRequest = false;
     isConnected = true;
@@ -441,10 +444,11 @@ socket.on('confirmrequest', function(data) {
 socket.on('imgByClient', function(data) {
     let fileNames = [data];
     displayImage(fileNames, true);
+    let myNotification = new Notification('New image', {
+        body: connectedTo + ' has shared an image with you!'
+    })
 });
 
 socket.on('requestConnectedTo', function(callback) {
     callback(null, connectedTo);
-})
-
-
+});
