@@ -20,16 +20,17 @@
   "build": {
     "appId": "com.example.shoumi",
     "win": {
+      "target": "nsis",
       "publish": [
-        "github"
+        {
+          "provider": "github"
+        }
       ],
       "extraResources": {
         "from": "./build/trayicon.png",
-        "to": ".",
         "from": "./build/icon.ico",
         "to": "."
-      },
-      "target": "squirrel"
+      }
     }
   },
   "devDependencies": {
@@ -40,11 +41,10 @@
     "webpack-cli": "^3.1.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "ship": "build --win -p always",
-    "pack": "electron-builder --dir",
+    "publish": "build --win -p always",
     "dist": "electron-builder",
+    "debug": "set DEBUG=electron-builder && build",
     "postinstall": "electron-builder install-app-deps"
   },
   "repository": {
