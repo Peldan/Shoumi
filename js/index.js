@@ -58,35 +58,35 @@ app.on('ready', () => {
     tray.setToolTip("Shoumi - Image viewer");
     tray.setContextMenu(contextMenu);
     if(!isDev) {
-        autoUpdater.checkForUpdates();
+        autoUpdater.checkForUpdatesAndNotify();
     }
 });
 
-autoUpdater.on('checking-for-update', () => {
-    console.log("Checking for updates...");
-});
-
-autoUpdater.on('update-available', (info) => {
-    console.log("Update available");
-    console.log("Version: " + info.version);
-});
-
-autoUpdater.on('update-not-available', () => {
-    console.log("Update not available");
-});
-
-autoUpdater.on('download-progress', (progress) => {
-    console.log("Download progress: ${Math.floor(progress.percent)}");
-});
-
-autoUpdater.on('update-downloaded', (info) => {
-    console.log("Download complete");
-    autoUpdater.quitAndInstall();
-});
-
-autoUpdater.on('error', (error) => {
-    log.info("Update error:" + error);
-});
+// autoUpdater.on('checking-for-update', () => {
+//     console.log("Checking for updates...");
+// });
+//
+// autoUpdater.on('update-available', (info) => {
+//     console.log("Update available");
+//     console.log("Version: " + info.version);
+// });
+//
+// autoUpdater.on('update-not-available', () => {
+//     console.log("Update not available");
+// });
+//
+// autoUpdater.on('download-progress', (progress) => {
+//     console.log("Download progress: ${Math.floor(progress.percent)}");
+// });
+//
+// autoUpdater.on('update-downloaded', (info) => {
+//     console.log("Download complete");
+//     autoUpdater.quitAndInstall();
+// });
+//
+// autoUpdater.on('error', (error) => {
+//     log.info("Update error:" + error);
+// });
 
 
 
