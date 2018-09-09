@@ -25,3 +25,4 @@ dist
 ehthumbs.db
 Thumbs.db
 electron-builder.yml
+workspace.xml
