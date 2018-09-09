@@ -21,6 +21,11 @@ let $ = require("jquery");
 let imgdiv = $('#bild');
 
 //TODO fix bug where the topmost shared photo cannot be selected
+//TODO allow user to select multiple images, and then download them in a bundle (zip?)
+//TODO modularize the code
+//TODO user accounts with pre-defined connections?
+//TODO chat
+
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -141,6 +146,7 @@ function displayImage(fileNames, isShared) {
     });
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
+    window.scrollTo(0, $(layerCanvasList[layerCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
     $('.layercanvas').click(function(evt){
         evt.preventDefault();
         evt.stopPropagation();
@@ -404,6 +410,19 @@ $( document ).ready(function (){
     createCardObj("Press [O] to open an image", ['Ok, got it!']);
     displayTip();
     createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
+    document.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let draggedFiles = new Set();
+        for(let f of e.dataTransfer.files){
+            draggedFiles.add(f.path);
+        }
+        displayImage(draggedFiles);
+    });
+    document.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
 });
 
 socket.on('newuser', function(data) {
