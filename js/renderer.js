@@ -20,9 +20,7 @@ let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 
-//TODO fix bug where the topmost shared photo cannot be selected
 //TODO allow user to select multiple images, and then download them in a bundle (zip?)
-//TODO modularize the code
 //TODO user accounts with pre-defined connections?
 //TODO chat
 
@@ -147,7 +145,12 @@ function displayImage(fileNames, isShared) {
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
     window.scrollTo(0, $(layerCanvasList[layerCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
-    $('.layercanvas').click(function(evt){
+    if(isShared){ notifyUser("img"); }
+    addCanvasListener();
+}
+
+function addCanvasListener(){
+    $('.layercanvas').off().on('click', function(evt){
         evt.preventDefault();
         evt.stopPropagation();
         let target = $(this);
@@ -162,6 +165,21 @@ function displayImage(fileNames, isShared) {
             toDelete.splice(toDelete.indexOf(target.siblings(".imgcanvas")), 1);
         }
     })
+}
+
+function notifyUser(event){
+    switch(event){
+        case "img":
+            notifier.notify({
+                title: 'Image received',
+                message: 'Image received from ' + connectedTo.customId,
+                icon: (isDev) ? './build/icon.ico' : process.resourcesPath + '\\icon.ico',
+                id: 'com.example.shoumi',
+            });
+            break;
+        default:
+            break;
+    }
 }
 
 function createCardObj(text, options){
@@ -453,12 +471,6 @@ socket.on('connectionsuccess', function(data){
 socket.on('imgByClient', function(data) {
     let fileNames = [data];
     displayImage(fileNames, true);
-    notifier.notify({
-        title: 'Image received',
-        message: 'Image received from ' + connectedTo.customId,
-        icon: (isDev) ? './build/icon.ico' : process.resourcesPath + '\\icon.ico',
-        id: 'com.example.shoumi',
-    });
 });
 
 socket.on('requestConnectedTo', function(callback) {
