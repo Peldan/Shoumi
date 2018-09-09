@@ -11,6 +11,7 @@ Download the latest setup.exe from [releases](https://github.com/Peldan/imgviewe
 
 * [Electron](https://electronjs.org/) - The framework used
 * [Socket.io](https://socket.io/) - Network
+* [Materialize.css](https://materializecss.com/i) - CSS framework
 
 ## Author
 
