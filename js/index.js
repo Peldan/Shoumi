@@ -34,6 +34,9 @@ function createWindow(){
         window = null;
         app.quit();
     });
+    window.on('will-navigate', (e) => {
+        e.preventDefault();
+    });
 }
 
 app.on('ready', () => {
@@ -61,6 +64,7 @@ app.on('ready', () => {
         autoUpdater.checkForUpdatesAndNotify();
     }
 });
+
 
 
 

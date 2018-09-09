@@ -1,8 +1,10 @@
+let { saveAs } = require('file-saver/FileSaver');
 const {dialog} = require('electron').remote;
 const prompt = require('electron-prompt');
 const isDev = require('electron-is-dev');
 const fs = require('fs');
 const notifier = require('node-notifier');
+let JSZip = require('jszip');
 let socket = io.connect('https://shoumiserver.herokuapp.com');
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
@@ -13,16 +15,16 @@ let didRequest = false;
 let isConnected = false;
 let connectedTo = null;
 let chosenName = null;
-let toDelete = [];
+let selectedImages = [];
 let infoCards = [];
 let users = [];
 let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 
-//TODO allow user to select multiple images, and then download them in a bundle (zip?)
 //TODO user accounts with pre-defined connections?
 //TODO chat
+
 
 
 document.onkeydown = function(event) {
@@ -157,12 +159,12 @@ function addCanvasListener(){
         console.log("Click!");
         if(target.css('border') !== "2px solid rgb(255, 0, 0)" || target.css('border') == null){
             $(this).css('border', "solid 2px red");
-            toDelete.push(target);
-            toDelete.push(target.siblings(".imgcanvas"));
+            selectedImages.push(target);
+            selectedImages.push(target.siblings(".imgcanvas"));
         } else {
             $(this).css('border', "solid 0px red");
-            toDelete.splice(toDelete.indexOf(target), 1);
-            toDelete.splice(toDelete.indexOf(target.siblings(".imgcanvas")), 1);
+            selectedImages.splice(selectedImages.indexOf(target), 1);
+            selectedImages.splice(selectedImages.indexOf(target.siblings(".imgcanvas")), 1);
         }
     })
 }
@@ -277,13 +279,13 @@ function sharePhotos(){
 }
 
 function deleteSelected(){
-    toDelete.forEach(function(element){
+    selectedImages.forEach(function(element){
         let obj = $(element);
         let objParent = $(element).parent();
         obj.remove();
         objParent.remove();
     });
-    toDelete = [];
+    selectedImages = [];
 }
 
 function enterName(){
@@ -302,6 +304,24 @@ function enterName(){
             }
         })
         .catch(console.error);
+}
+
+function zipFilesAndDownload(){
+    let imgzip = new JSZip();
+    let imgfolder = imgzip.folder('images');
+    let count = 0;
+    selectedImages.forEach((e) => {
+        if($(e).attr('class') === 'imgcanvas'){
+            count++;
+            let curr = $(e)[0];
+            let data = curr.toDataURL('image/jpeg').split(",")[1];
+            imgfolder.file("sharedimg_" + count + ".jpg", data, {base64: true});
+        }
+    });
+
+    imgzip.generateAsync({type:"blob"}).then(function(content) {
+        saveAs(content, "sharedimages.zip");
+    });
 }
 
 
@@ -408,7 +428,10 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     if(e.target.id == 'deletebtn') {
         deleteSelected();
     }
-})
+    if(e.target.id == 'zipbtn') {
+        zipFilesAndDownload();
+    }
+});
 
 $('#tipcol').on("click", function(e) {
     e.preventDefault();
