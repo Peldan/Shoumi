@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="de283d78-cdb5-419f-af2e-168b1f7c85a5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/settings.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/settings.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/renderer.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/renderer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,8 +43,8 @@
         <counts>
           <entry key="css" value="732" />
           <entry key="gitignore" value="44" />
-          <entry key="html" value="1370" />
-          <entry key="js" value="21616" />
+          <entry key="html" value="1429" />
+          <entry key="js" value="23353" />
           <entry key="json" value="332" />
           <entry key="md" value="401" />
         </counts>
@@ -53,9 +52,9 @@
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="CSS" value="732" />
-          <entry key="HTML" value="1370" />
+          <entry key="HTML" value="1429" />
           <entry key="JSON" value="332" />
-          <entry key="JavaScript" value="21616" />
+          <entry key="JavaScript" value="23353" />
           <entry key="Markdown" value="401" />
           <entry key="PLAIN_TEXT" value="44" />
         </counts>
@@ -87,8 +86,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/renderer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="292">
-              <caret line="282" column="49" lean-forward="true" selection-start-line="282" selection-start-column="49" selection-end-line="282" selection-end-column="49" />
+            <state relative-caret-position="200">
+              <caret line="379" column="52" lean-forward="true" selection-start-line="379" selection-start-column="52" selection-end-line="379" selection-end-column="52" />
             </state>
           </provider>
         </entry>
@@ -114,8 +113,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="476">
-              <caret line="28" column="56" selection-start-line="28" selection-start-column="56" selection-end-line="28" selection-end-column="56" />
+            <state relative-caret-position="408">
+              <caret line="27" column="69" selection-start-line="27" selection-start-column="69" selection-end-line="27" selection-end-column="69" />
             </state>
           </provider>
         </entry>
@@ -172,10 +171,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>.add</find>
-      <find>.push</find>
-      <find>imgdiv</find>
-      <find>displayImage</find>
       <find>border</find>
       <find>p2pb</find>
       <find>electro</find>
@@ -202,6 +197,10 @@
       <find>getcurrent</find>
       <find>socket</find>
       <find>save</find>
+      <find>sharebt</find>
+      <find>request</find>
+      <find>requestrooms</find>
+      <find>login</find>
     </findStrings>
     <replaceStrings>
       <replace>let</replace>
@@ -224,11 +223,11 @@
         <option value="$PROJECT_DIR$/css/materialize.min.css" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/package.json" />
-        <option value="$PROJECT_DIR$/index.html" />
         <option value="$PROJECT_DIR$/js/index.js" />
         <option value="$PROJECT_DIR$/css/settings.css" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/settings.html" />
+        <option value="$PROJECT_DIR$/index.html" />
         <option value="$PROJECT_DIR$/js/renderer.js" />
       </list>
     </option>
@@ -239,9 +238,6 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="NodeModulesDirectoryManager">
-    <handled-path value="$PROJECT_DIR$/node_modules" />
-  </component>
   <component name="NodePackageJsonFileManager">
     <packageJsonPaths>
       <path value="$PROJECT_DIR$/dist/win-unpacked/resources/app.asar.unpacked/node_modules/node-notifier/package.json" />
@@ -249,8 +245,8 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="280" />
-    <option name="y" value="96" />
+    <option name="x" value="135" />
+    <option name="y" value="95" />
     <option name="width" value="1325" />
     <option name="height" value="909" />
   </component>
@@ -406,12 +402,12 @@
       <workItem from="1536522498334" duration="12126000" />
       <workItem from="1536575023811" duration="6264000" />
       <workItem from="1536584445294" duration="1981000" />
-      <workItem from="1536591531924" duration="2726000" />
+      <workItem from="1536591531924" duration="9656000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="214614000" />
+    <option name="totallyTimeSpent" value="221544000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -541,13 +537,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="28" column="56" selection-start-line="28" selection-start-column="56" selection-end-line="28" selection-end-column="56" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/css/settings.css">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="714">
@@ -586,10 +575,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="27" column="69" selection-start-line="27" selection-start-column="69" selection-end-line="27" selection-end-column="69" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/js/renderer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="282" column="49" lean-forward="true" selection-start-line="282" selection-start-column="49" selection-end-line="282" selection-end-column="49" />
+        <state relative-caret-position="200">
+          <caret line="379" column="52" lean-forward="true" selection-start-line="379" selection-start-column="52" selection-end-line="379" selection-end-column="52" />
         </state>
       </provider>
     </entry>

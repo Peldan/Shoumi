@@ -4,7 +4,9 @@ const prompt = require('electron-prompt');
 const isDev = require('electron-is-dev');
 const fs = require('fs');
 const notifier = require('node-notifier');
+const swal = require('sweetalert2')
 let JSZip = require('jszip');
+let md5 = require('md5');
 let socket;
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
@@ -353,6 +355,62 @@ function enterName(){
         .catch(console.error);
 }
 
+function login(){
+    let username;
+    let password;
+    swal({
+        title: "Account",
+        type: 'info',
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: false,
+        confirmButtonText:
+            '<strong>Sign in</strong>',
+        confirmButtonAriaLabel: 'Sign in',
+        cancelButtonText:
+            '<strong>Register</strong>',
+        cancelButtonAriaLabel: 'Register',
+    }).then((result) =>{
+        if(result.value){
+            swal({
+                title: "Sign in",
+                type: 'question',
+                html:
+                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
+                showCloseButton: true,
+                showCancelButton: true,
+                focusConfirm: false,
+                confirmButtonText:
+                    '<strong>OK</strong>',
+                confirmButtonAriaLabel: 'OK',
+                cancelButtonText:
+                    '<strong>Cancel</strong>',
+                cancelButtonAriaLabel: 'Cancel',
+                preConfirm: function() {
+                    username = document.getElementById('swal-input1').value;
+                    password = document.getElementById('swal-input2').value;
+                }
+            }).then((result) => {
+                if(result.value){
+                    socket.emit('requestsalt', (error, data) => {
+                        let salt = data;
+                        let hashedpw = md5(username + salt + password);
+                        socket.emit('hashedpw', { username: username, hashedpw: hashedpw }, (error, data) => {
+                            if(error)swal(error);
+                            else {
+                                swal(data);
+                            }
+                        });
+                    })
+                }
+            })
+        } else if(result.dismiss === swal.DismissReason.cancel){
+
+        }
+    })
+}
+
 function zipFilesAndDownload(){
     let imgzip = new JSZip();
     let imgfolder = imgzip.folder('images');
@@ -478,6 +536,9 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     if(e.target.id == 'zipbtn') {
         zipFilesAndDownload();
     }
+    if(e.target.id == 'loginbtn') {
+        login();
+    }
 });
 
 $('#tipcol').on("click", function(e) {
@@ -579,5 +640,3 @@ function startSocketListeners() {
         callback(null, connectedTo);
     });
 }
-
-
