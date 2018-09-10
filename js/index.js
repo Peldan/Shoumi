@@ -67,7 +67,6 @@ function openSettings(){
         resizable: false
     });
     settingsWindow.loadFile(settingsTemplate);
-    settingsWindow.webContents.openDevTools();
     settingsWindow.on('close', () => {
         settingsWindow = null;
     })
@@ -98,6 +97,10 @@ app.on('ready', () => {
         autoUpdater.checkForUpdatesAndNotify();
     }
 });
+
+ipcMain.on('requestsocket', (event, arg) => {
+    event.returnValue = socket;
+})
 
 
 
