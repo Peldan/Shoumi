@@ -22,6 +22,8 @@ let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 let autoShare = false;
+let settings = [[ 'autoShare', false]]
+let settingsMap = new Map(settings);
 
 //TODO user accounts with pre-defined connections?
 //TODO chat
@@ -100,8 +102,6 @@ function displayTip(){
         cardobj.isRead = true;
     }
 }
-
-
 
 
 function createImageObject(src, isShared, imgcanvas){
@@ -269,6 +269,27 @@ function requestConnection(){
             confirm("You are currently connected to " + connectedTo);
         }
     });
+}
+
+function loadSettings(filename){
+    fs.readFile("settings.cfg", (err, data) => {
+        if(err){
+            console.log(err);
+        } else {
+            let settings = data.toString().split("\n");
+            for(let i = 0; i < settings.length; i++){
+                let settingName = settings[i].split(":")[0];
+                let value = settings[i].split(":")[1].split(",")[0];
+                if(filename[0] === "index.html"){
+                    settingsMap.set(settingName, (value.trim() === 'true' ? true:false));
+                }
+                else if(filename[0] === "settings.html"){
+                    let element = document.getElementById(settingName);
+                    element.checked = (value.trim() === 'true' ? true:false);
+                }
+            }
+        }
+    })
 }
 
 function sharePhotos(){
@@ -468,10 +489,11 @@ $('#tipcol').on("click", function(e) {
 
 $( document ).ready(function (){
     let filename = window.location.pathname.split("/").slice(-1);
-    console.log(filename)
+    loadSettings(filename);
     switch(filename[0]){
         case "index.html":
             socket = io.connect('https://shoumiserver.herokuapp.com');
+            startSocketListeners();
             enterName();
             globalcanvas = document.createElement("canvas");
             globalcanvas.id = "globalcanvas";
@@ -497,48 +519,65 @@ $( document ).ready(function (){
             });
             break;
         case "settings.html":
+            $('.setting').change(function(e){
+                let key = settingsMap.get(e.target.id);
+                settingsMap.set(key, e.target.checked);
+            });
+
+            $('#save').click(function(){
+                let settings = document.getElementsByClassName("setting");
+                for(let i = 0; i < settings.length; i++){
+                    let curr = settings[i];
+                    if(settings[i + 1] !== null || settings[i + 1] !== undefined){
+                        fs.writeFile("settings.cfg", curr.id + ": " + curr.checked + ",\n", 'utf8', function(error) {
+                            if(error) throw error;
+                        });
+                    } else {
+                        fs.writeFile("settings.cfg", curr.id + ": " + curr.checked, 'utf8', function(error) {
+                            if(error) throw error;
+                        });
+                    }
+                }
+            })
             break;
         default:
             break;
     }
 });
 
-socket.on('newuser', function(data) {
-    users = data.userlist;
-});
+function startSocketListeners() {
+    socket.on('newuser', function(data) {
+        users = data.userlist;
+    });
 
-socket.on('userleft',function(data) {
-    users = data.userlist;
-});
+    socket.on('userleft',function(data) {
+        users = data.userlist;
+    });
 
-socket.on('broadcast',function(data) {
-    console.log(data.description);
-});
+    socket.on('broadcast',function(data) {
+        console.log(data.description);
+    });
 
-socket.on('connectionsuccess', function(data){
-    console.log("Did request: " + didRequest);
-    if(didRequest) {
-        alert("You are now connected with user " + data.dest.customId);
-    } else {
-        alert("User " + data.requestee.customId + " has initiated a connection with you");
-    }
-    didRequest = false;
-    isConnected = true;
-    connectedTo = data.dest.clientId;
-});
+    socket.on('connectionsuccess', function(data){
+        console.log("Did request: " + didRequest);
+        if(didRequest) {
+            alert("You are now connected with user " + data.dest.customId);
+        } else {
+            alert("User " + data.requestee.customId + " has initiated a connection with you");
+        }
+        didRequest = false;
+        isConnected = true;
+        connectedTo = data.dest.clientId;
+    });
+
+    socket.on('imgByClient', function(data) {
+        let fileNames = [data];
+        displayImage(fileNames, true);
+    });
+
+    socket.on('requestConnectedTo', function(callback) {
+        callback(null, connectedTo);
+    });
+}
 
 
-socket.on('imgByClient', function(data) {
-    let fileNames = [data];
-    displayImage(fileNames, true);
-});
-
-socket.on('requestConnectedTo', function(callback) {
-    callback(null, connectedTo);
-});
-
-$('.setting').change(function(e){
-    if(e.target.id === "autoshare"){
-        autoShare = e.target.checked;
-    };
-});
