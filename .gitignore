@@ -24,3 +24,4 @@ dist/
 ehthumbs.db
 Thumbs.db
 electron-builder.yml
+settings.cfg

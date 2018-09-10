@@ -10,7 +10,6 @@ let settingsTemplate = 'settings.html';
 let fileName;
 let tray = null;
 let isQuitting = false;
-let windows = [];
 const menuTemplate = [
     {
         label: 'File',

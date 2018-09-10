@@ -17,6 +17,7 @@ body {
 
 #top {
     padding:10px;
+    border:1px solid black;
 }
 
 #body {
@@ -30,6 +31,7 @@ body {
     position:relative;
 }
 
+
 #bottom {
     position:absolute;
     bottom:0;
@@ -39,5 +41,6 @@ body {
 }
 
 #bottom button {
-    margin: auto;
+    padding: 10px;
+    margin-left: 10px;
 }
