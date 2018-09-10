@@ -10,12 +10,12 @@ dist/
 *.rar
 *.tar
 *.zip
-**/.idea/workspace.xml
-**/.idea/tasks.xml
+**/.idea/
+**/.idea/
 *.log
 *.sql
 *.sqlite
-
+*/workspace.xml
 .DS_Store
 .DS_Store?
 ._*
