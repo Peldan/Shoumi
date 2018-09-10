@@ -25,7 +25,6 @@ let autoShare = false;
 
 //TODO user accounts with pre-defined connections?
 //TODO chat
-//TODO Setting for auto-sharing all imported images or having to select images & use the share button
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -105,18 +104,18 @@ function displayTip(){
 
 
 
-function createImageObject(src, isShared){
+function createImageObject(src, isShared, imgcanvas){
     let imageObj = new Object();
     imageObj.file = src;
     imageObj.isShared = isShared;
     imageObj.isSelected = false;
+    imageObj.imgcanvas = imgcanvas;
     images.push(imageObj);
 }
 
 function displayImage(fileNames, isShared) {
     fileNames.forEach(function(file){
         let src = (isShared) ? ("data:image/png;base64," + Buffer.from((file.buffer)).toString('base64')) : file;
-        createImageObject(src, isShared);
         const img = new Image();
         img.src = src;
         let firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
@@ -144,7 +143,9 @@ function displayImage(fileNames, isShared) {
         };
         newrow.appendChild(firstCanvas);
         newrow.appendChild(secondCanvas);
+        createImageObject(src, isShared, firstCanvas);
     });
+
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     layerCanvasList = document.getElementsByClassName('layercanvas');
     window.scrollTo(0, $(layerCanvasList[layerCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
@@ -270,7 +271,6 @@ function requestConnection(){
     });
 }
 
-
 function sharePhotos(){
     if(autoShare) {
         for (let i = 0; i < images.length; i++) {
@@ -283,11 +283,19 @@ function sharePhotos(){
         }
     }
     else if(!autoShare && selectedImages.length > 0){
-        for(let i of selectedImages){
-            if($(i).attr('class') === 'imgcanvas'){
-                let curr = $(i)[0];
-                let string = $(i)[0].toDataURL().split(',')[1];
-                console.log(Buffer.from(string, 'base64').toString('ascii'));
+        for(let x of selectedImages){
+            if($(x).attr('class') === 'imgcanvas'){
+                let curr = $(x)[0];
+                for(let y of images){
+                    if(y.imgcanvas.getContext('2d') === curr.getContext('2d')){
+                        if(!y.isShared){
+                            fs.readFile(y.file, function(err, data) {
+                                y.isShared = true;
+                                socket.emit('imgByClient', { image: true, buffer: data});
+                            });
+                        }
+                    }
+                }
             }
         }
     }
@@ -459,29 +467,39 @@ $('#tipcol').on("click", function(e) {
 });
 
 $( document ).ready(function (){
-    enterName();
-    globalcanvas = document.createElement("canvas");
-    globalcanvas.id = "globalcanvas";
-    main = document.getElementsByTagName("main")[0];
-    header = document.getElementById("#header");
-    cardarea = document.getElementById("tipcol");
-    main.appendChild(globalcanvas);
-    createCardObj("Press [O] to open an image", ['Ok, got it!']);
-    displayTip();
-    createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
-    document.addEventListener('drop', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        let draggedFiles = new Set();
-        for(let f of e.dataTransfer.files){
-            draggedFiles.add(f.path);
-        }
-        displayImage(draggedFiles);
-    });
-    document.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    });
+    let filename = window.location.pathname.split("/").slice(-1);
+    console.log(filename)
+    switch(filename[0]){
+        case "index.html":
+            enterName();
+            globalcanvas = document.createElement("canvas");
+            globalcanvas.id = "globalcanvas";
+            main = document.getElementsByTagName("main")[0];
+            header = document.getElementById("#header");
+            cardarea = document.getElementById("tipcol");
+            main.appendChild(globalcanvas);
+            createCardObj("Press [O] to open an image", ['Ok, got it!']);
+            displayTip();
+            createCardObj("You're now in full screen mode! Use [SPACE] to flip between your imported images.\nPress [ESCAPE] or the Overview button to leave full screen.", ['Ok, got it!']);
+            document.addEventListener('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let draggedFiles = new Set();
+                for(let f of e.dataTransfer.files){
+                    draggedFiles.add(f.path);
+                }
+                displayImage(draggedFiles);
+            });
+            document.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            break;
+        case "settings.html":
+            break;
+        default:
+            break;
+    }
 });
 
 socket.on('newuser', function(data) {
@@ -520,6 +538,6 @@ socket.on('requestConnectedTo', function(callback) {
 
 $('.setting').change(function(e){
     if(e.target.id === "autoshare"){
-        autoShare = true;
-    }
+        autoShare = e.target.checked;
+    };
 });

@@ -1,15 +1,16 @@
-const { app, BrowserWindow, Menu, Tray } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const isDev = require('electron-is-dev');
 const log = require('electron-log');
 require('electron-reload')(__dirname);
 log.transports.file.level = "info";
-let window;
+let settingsWindow, window;
 let template = 'index.html';
 let settingsTemplate = 'settings.html';
 let fileName;
 let tray = null;
 let isQuitting = false;
+let windows = [];
 const menuTemplate = [
     {
         label: 'File',
@@ -59,14 +60,17 @@ function createWindow(){
     });
 }
 
-function settingsChanged(event){
-
-}
-
 function openSettings(){
-    let settingsWindow = new BrowserWindow({width: 400, height: 500});
+    settingsWindow = new BrowserWindow({
+        width: 400,
+        height: 500,
+        resizable: false
+    });
     settingsWindow.loadFile(settingsTemplate);
     settingsWindow.webContents.openDevTools();
+    settingsWindow.on('close', () => {
+        settingsWindow = null;
+    })
 }
 
 app.on('ready', () => {
@@ -94,6 +98,7 @@ app.on('ready', () => {
         autoUpdater.checkForUpdatesAndNotify();
     }
 });
+
 
 
 
