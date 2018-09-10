@@ -355,7 +355,7 @@ function enterName(){
         .catch(console.error);
 }
 
-function login(){
+function login(){ //TODO register and sign-in are very similar, could probably smash them into the same?
     let username;
     let password;
     swal({
@@ -406,7 +406,39 @@ function login(){
                 }
             })
         } else if(result.dismiss === swal.DismissReason.cancel){
-
+            swal({
+                title: "Register",
+                type: 'question',
+                html:
+                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
+                showCloseButton: true,
+                showCancelButton: true,
+                focusConfirm: false,
+                confirmButtonText:
+                    '<strong>OK</strong>',
+                confirmButtonAriaLabel: 'OK',
+                cancelButtonText:
+                    '<strong>Cancel</strong>',
+                cancelButtonAriaLabel: 'Cancel',
+                preConfirm: function() {
+                    username = document.getElementById('swal-input1').value;
+                    password = document.getElementById('swal-input2').value;
+                }
+            }).then((result) => {
+               if(result.value){
+                   socket.emit('requestsalt', (error, data) => {
+                       let salt = data;
+                       let hashedpw = md5(username + salt + password);
+                       socket.emit('createuser', { username: username, hashedpw: hashedpw }, (error, data) => {
+                           if(error)swal(error);
+                           else {
+                               swal(data);
+                           }
+                       });
+                   });
+               }
+            });
         }
     })
 }

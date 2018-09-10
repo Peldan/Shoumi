@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="de283d78-cdb5-419f-af2e-168b1f7c85a5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/renderer.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/renderer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,7 +40,7 @@
           <entry key="css" value="732" />
           <entry key="gitignore" value="44" />
           <entry key="html" value="1429" />
-          <entry key="js" value="23353" />
+          <entry key="js" value="23735" />
           <entry key="json" value="332" />
           <entry key="md" value="401" />
         </counts>
@@ -54,7 +50,7 @@
           <entry key="CSS" value="732" />
           <entry key="HTML" value="1429" />
           <entry key="JSON" value="332" />
-          <entry key="JavaScript" value="23353" />
+          <entry key="JavaScript" value="23735" />
           <entry key="Markdown" value="401" />
           <entry key="PLAIN_TEXT" value="44" />
         </counts>
@@ -86,8 +82,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/renderer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="200">
-              <caret line="379" column="52" lean-forward="true" selection-start-line="379" selection-start-column="52" selection-end-line="379" selection-end-column="52" />
+            <state relative-caret-position="471">
+              <caret line="435" column="42" lean-forward="true" selection-start-line="435" selection-start-column="42" selection-end-line="435" selection-end-column="42" />
             </state>
           </provider>
         </entry>
@@ -245,9 +241,9 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="135" />
-    <option name="y" value="95" />
-    <option name="width" value="1325" />
+    <option name="x" value="576" />
+    <option name="y" value="182" />
+    <option name="width" value="1797" />
     <option name="height" value="909" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -402,12 +398,12 @@
       <workItem from="1536522498334" duration="12126000" />
       <workItem from="1536575023811" duration="6264000" />
       <workItem from="1536584445294" duration="1981000" />
-      <workItem from="1536591531924" duration="9656000" />
+      <workItem from="1536591531924" duration="10697000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="221544000" />
+    <option name="totallyTimeSpent" value="222585000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -584,8 +580,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/renderer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="200">
-          <caret line="379" column="52" lean-forward="true" selection-start-line="379" selection-start-column="52" selection-end-line="379" selection-end-column="52" />
+        <state relative-caret-position="471">
+          <caret line="435" column="42" lean-forward="true" selection-start-line="435" selection-start-column="42" selection-end-line="435" selection-end-column="42" />
         </state>
       </provider>
     </entry>
