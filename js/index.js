@@ -6,10 +6,28 @@ require('electron-reload')(__dirname);
 log.transports.file.level = "info";
 let window;
 let template = 'index.html';
+let settingsTemplate = 'settings.html';
 let fileName;
 let tray = null;
 let isQuitting = false;
-
+const menuTemplate = [
+    {
+        label: 'File',
+        submenu: [
+            {label: 'Open'},
+            {label: 'Settings', click: () => {
+                openSettings();
+            }},
+            {role: 'quit'}
+     ]
+    },
+    {
+        label: 'Edit',
+        submenu: [
+            {role: 'undo'},
+            {role: 'redo'}
+        ]
+    }]
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
@@ -20,6 +38,8 @@ function createWindow(){
     if(isDev){
         window.webContents.openDevTools();
     }
+    const menu = Menu.buildFromTemplate(menuTemplate);
+    Menu.setApplicationMenu(menu);
     if(typeof fileName !== "undefined"){
         window.webContents.on('did-finish-load', () => {
             window.webContents.send('image-msg', fileName);
@@ -37,6 +57,16 @@ function createWindow(){
     window.on('will-navigate', (e) => {
         e.preventDefault();
     });
+}
+
+function settingsChanged(event){
+
+}
+
+function openSettings(){
+    let settingsWindow = new BrowserWindow({width: 400, height: 500});
+    settingsWindow.loadFile(settingsTemplate);
+    settingsWindow.webContents.openDevTools();
 }
 
 app.on('ready', () => {

@@ -21,11 +21,11 @@ let users = [];
 let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
+let autoShare = false;
 
 //TODO user accounts with pre-defined connections?
 //TODO chat
-
-
+//TODO Setting for auto-sharing all imported images or having to select images & use the share button
 
 document.onkeydown = function(event) {
     event = event || window.event;
@@ -102,7 +102,8 @@ function displayTip(){
     }
 }
 
-function b64(e){let t="";let n=new Uint8Array(e);let r=n.byteLength;for(let i=0;i<r;i++){t+=String.fromCharCode(n[i])}return window.btoa(t)}
+
+
 
 function createImageObject(src, isShared){
     let imageObj = new Object();
@@ -114,7 +115,7 @@ function createImageObject(src, isShared){
 
 function displayImage(fileNames, isShared) {
     fileNames.forEach(function(file){
-        let src = (isShared) ? ("data:image/png;base64," + b64(file.buffer)) : file;
+        let src = (isShared) ? ("data:image/png;base64," + Buffer.from((file.buffer)).toString('base64')) : file;
         createImageObject(src, isShared);
         const img = new Image();
         img.src = src;
@@ -149,6 +150,9 @@ function displayImage(fileNames, isShared) {
     window.scrollTo(0, $(layerCanvasList[layerCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
     if(isShared){ notifyUser("img"); }
     addCanvasListener();
+    if(autoShare){
+        sharePhotos();
+    }
 }
 
 function addCanvasListener(){
@@ -195,8 +199,7 @@ function openDialog() {
     dialog.showOpenDialog({
         properties: ["openFile", "multiSelections"],
         filters: [
-            {name: "Images", extensions: ["jpg", "png", "gif"]},
-            {name: 'All Files', extensions: ['*']}
+            {name: "Images", extensions: ["jpg", "png", "gif"]}
             ]
     }, fileNames => {
         if (fileNames === undefined) {
@@ -267,14 +270,29 @@ function requestConnection(){
     });
 }
 
+
 function sharePhotos(){
-    for(let i = 0; i < images.length; i++) {
-        fs.readFile(images[i].file, function(err, data){
-            if(!images[i].isShared){
-                images[i].isShared = true;
-                socket.emit('imgByClient', { image: true, buffer: data });
+    if(autoShare) {
+        for (let i = 0; i < images.length; i++) {
+            fs.readFile(images[i].file, function (err, data) {
+                if(!images[i].isShared) {
+                    images[i].isShared = true;
+                    socket.emit('imgByClient', { image: true, buffer: data });
+                }
+            });
+        }
+    }
+    else if(!autoShare && selectedImages.length > 0){
+        for(let i of selectedImages){
+            if($(i).attr('class') === 'imgcanvas'){
+                let curr = $(i)[0];
+                let string = $(i)[0].toDataURL().split(',')[1];
+                console.log(Buffer.from(string, 'base64').toString('ascii'));
             }
-        });
+        }
+    }
+    else {
+        alert("You haven't enabled auto-share in settings. You can still share images, but you need to select the ones you want to share first.");
     }
 }
 
@@ -498,4 +516,10 @@ socket.on('imgByClient', function(data) {
 
 socket.on('requestConnectedTo', function(callback) {
     callback(null, connectedTo);
+});
+
+$('.setting').change(function(e){
+    if(e.target.id === "autoshare"){
+        autoShare = true;
+    }
 });

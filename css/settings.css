@@ -1,0 +1,43 @@
+input {
+    font-family: "Times New Roman", Times, serif;
+}
+
+html,
+body {
+    margin:0;
+    padding:0;
+    height:100%;
+}
+
+#center {
+    margin-left: 10px;
+    position: absolute;
+
+}
+
+#top {
+    padding:10px;
+}
+
+#body {
+    padding:10px;
+    padding-bottom:60px;   /* Height of the footer */
+}
+
+#container {
+    height: 100%;
+    min-height:100%;
+    position:relative;
+}
+
+#bottom {
+    position:absolute;
+    bottom:0;
+    margin: auto;
+    height:60px;
+    text-align: center;
+}
+
+#bottom button {
+    margin: auto;
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Shoumi - Settings</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/settings.css"/>
+</head>
+<body>
+    <div id="container">
+        <div id="top">
+
+        </div>
+        <div id="body">
+            <form action="">
+                <input type="checkbox" class="setting" id="autoshare">Share images instantly as they are loaded to the client (if connected to a user).
+            </form>
+        </div>
+        <div id="bottom">
+            <button type="button" id="save">Save settings</button>
+        </div>
+    </div>
+</body>
+<script type=text/javascript src="js/index.js"></script>
+<script type="text/javascript" src="https://shoumiserver.herokuapp.com/socket.io/socket.io.js"></script>
+<script>
+    require('./js/renderer.js');
+</script>
+</html>
