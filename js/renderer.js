@@ -399,6 +399,9 @@ function login(){ //TODO register and sign-in are very similar, could probably s
                         socket.emit('hashedpw', { username: username, hashedpw: hashedpw }, (error, data) => {
                             if(error)swal(error);
                             else {
+                                socket.emit('customClientInfo', {
+                                    customId: username,
+                                });
                                 swal(data);
                             }
                         });
@@ -433,6 +436,9 @@ function login(){ //TODO register and sign-in are very similar, could probably s
                        socket.emit('createuser', { username: username, hashedpw: hashedpw }, (error, data) => {
                            if(error)swal(error);
                            else {
+                               socket.emit('customClientInfo', {
+                                   customId: username,
+                               });
                                swal(data);
                            }
                        });
@@ -458,6 +464,41 @@ function zipFilesAndDownload(){
 
     imgzip.generateAsync({type:"blob"}).then(function(content) {
         saveAs(content, "sharedimages.zip");
+    });
+}
+
+
+function addFriend() {
+    let username;
+    swal({
+        title: "Add friend",
+        type: 'question',
+        html:'<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>',
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: true,
+        confirmButtonText:
+            '<strong>Add</strong>',
+        confirmButtonAriaLabel: 'OK',
+        cancelButtonText:
+            '<strong>Cancel</strong>',
+        cancelButtonAriaLabel: 'Cancel',
+        inputValidator: (value) => {
+            return !value && 'No username specified'
+        },
+        preConfirm: () => {
+            username = document.getElementById("swal-input1").value;
+        }
+    }).then((result)=> {
+        if(result.value){
+            socket.emit('addfriend', {toAdd: username},(error, data) => {
+                if(error){
+                    swal(error);
+                } else {
+                    swal(data);
+                }
+            });
+        }
     });
 }
 
@@ -556,8 +597,8 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     if(e.target.id === 'selectbtn'){
         selectMode();
     }
-    if(e.target.id == 'p2pbtn'){
-        requestConnection();
+    if(e.target.id == 'friendbtn'){
+        addFriend();
     }
     if(e.target.id == 'sharebtn') {
         sharePhotos();
@@ -587,7 +628,6 @@ $( document ).ready(function (){
         case "index.html":
             socket = io.connect('https://shoumiserver.herokuapp.com');
             startSocketListeners();
-            enterName();
             globalcanvas = document.createElement("canvas");
             globalcanvas.id = "globalcanvas";
             main = document.getElementsByTagName("main")[0];
