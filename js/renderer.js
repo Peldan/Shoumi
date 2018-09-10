@@ -5,7 +5,7 @@ const isDev = require('electron-is-dev');
 const fs = require('fs');
 const notifier = require('node-notifier');
 let JSZip = require('jszip');
-let socket = io.connect('https://shoumiserver.herokuapp.com');
+let socket;
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
 let header, cardarea, currentSelection, lastModifiedCanvas, imgCanvasList, layerCanvasList, main, globalcanvas;
@@ -471,6 +471,7 @@ $( document ).ready(function (){
     console.log(filename)
     switch(filename[0]){
         case "index.html":
+            socket = io.connect('https://shoumiserver.herokuapp.com');
             enterName();
             globalcanvas = document.createElement("canvas");
             globalcanvas.id = "globalcanvas";

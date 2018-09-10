@@ -1,7 +1,7 @@
 node_modules/
 Shoumi-win32-x64/
 dist/
-
+.idea/workspace.xml
 *.7z
 *.dmg
 *.gz
