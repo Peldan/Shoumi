@@ -26,6 +26,7 @@ let imgdiv = $('#bild');
 let autoShare = false;
 let settings = [[ 'autoShare', false]]
 let settingsMap = new Map(settings);
+let currentUser = null;
 
 //TODO user accounts with pre-defined connections?
 //TODO chat
@@ -337,116 +338,130 @@ function deleteSelected(){
     selectedImages = [];
 }
 
-function enterName(){
-    prompt({
-        title: 'Enter your name',
-        label: 'Name: ',
-    })
-        .then((input) => {
-            if (input === null) {
-                console.log('user cancelled');
-            } else {
-                chosenName = input;
-                socket.emit('customClientInfo', {
-                    customId: input,
-                });
+function connectToFriend(){
+    if(currentUser !== null && currentUser !== undefined) {
+        swal({
+            title: "Start an image-sharing session with a friend",
+            type: 'question',
+            input: 'select',
+            inputOptions: currentUser.friendslist,
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+        }).then((result) => {
+            if (result.value) {
+                console.log(currentUser.friendslist[swal.getInput().selectedIndex]);
             }
-        })
-        .catch(console.error);
+        });
+    } else {
+        swal({text: "You are not logged in!", type: "warning"})
+    }
 }
 
-function login(){ //TODO register and sign-in are very similar, could probably smash them into the same?
-    let username;
-    let password;
-    swal({
-        title: "Account",
-        type: 'info',
-        showCloseButton: true,
-        showCancelButton: true,
-        focusConfirm: false,
-        confirmButtonText:
-            '<strong>Sign in</strong>',
-        confirmButtonAriaLabel: 'Sign in',
-        cancelButtonText:
-            '<strong>Register</strong>',
-        cancelButtonAriaLabel: 'Register',
-    }).then((result) =>{
-        if(result.value){
-            swal({
-                title: "Sign in",
-                type: 'question',
-                html:
-                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-                showCloseButton: true,
-                showCancelButton: true,
-                focusConfirm: false,
-                confirmButtonText:
-                    '<strong>OK</strong>',
-                confirmButtonAriaLabel: 'OK',
-                cancelButtonText:
-                    '<strong>Cancel</strong>',
-                cancelButtonAriaLabel: 'Cancel',
-                preConfirm: function() {
-                    username = document.getElementById('swal-input1').value;
-                    password = document.getElementById('swal-input2').value;
+function createUserObj(username){
+    currentUser = {
+        username: username,
+        friendslist: [],
+        connected: false,
+        connectedTo: null,
+    }
+    socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
+        if (error) swal(error);
+        else {
+            for (let i = 0; i < data.length; i++) {
+                let object = data[i];
+                for (let property in object) {
+                    currentUser.friendslist.push(object[property]);
                 }
-            }).then((result) => {
-                if(result.value){
-                    socket.emit('requestsalt', (error, data) => {
-                        let salt = data;
-                        let hashedpw = md5(username + salt + password);
-                        socket.emit('hashedpw', { username: username, hashedpw: hashedpw }, (error, data) => {
-                            if(error)swal(error);
-                            else {
-                                socket.emit('customClientInfo', {
-                                    customId: username,
-                                });
-                                swal(data);
-                            }
-                        });
-                    })
-                }
-            })
-        } else if(result.dismiss === swal.DismissReason.cancel){
-            swal({
-                title: "Register",
-                type: 'question',
-                html:
-                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-                showCloseButton: true,
-                showCancelButton: true,
-                focusConfirm: false,
-                confirmButtonText:
-                    '<strong>OK</strong>',
-                confirmButtonAriaLabel: 'OK',
-                cancelButtonText:
-                    '<strong>Cancel</strong>',
-                cancelButtonAriaLabel: 'Cancel',
-                preConfirm: function() {
-                    username = document.getElementById('swal-input1').value;
-                    password = document.getElementById('swal-input2').value;
-                }
-            }).then((result) => {
-               if(result.value){
-                   socket.emit('requestsalt', (error, data) => {
-                       let salt = data;
-                       let hashedpw = md5(username + salt + password);
-                       socket.emit('createuser', { username: username, hashedpw: hashedpw }, (error, data) => {
-                           if(error)swal(error);
-                           else {
-                               socket.emit('customClientInfo', {
-                                   customId: username,
-                               });
-                               swal(data);
-                           }
-                       });
-                   });
-               }
-            });
+            }
+
         }
-    })
+    });
+}
+
+
+function login(){
+    if(currentUser !== null && currentUser !== undefined){
+        swal({
+            title: "Logged in as " + currentUser.username,
+            type: 'info',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            text: currentUser.friendslist + "\n" + (connectedTo) ? "You are currently connected to: " + connectedTo : "",
+        })
+    } else {
+        let username = "";
+        let password = "";
+        let newUser = false;
+        swal({
+            title: "Account",
+            type: 'info',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            confirmButtonText:
+                '<strong>Sign in</strong>',
+            confirmButtonAriaLabel: 'Sign in',
+            cancelButtonText:
+                '<strong>Register</strong>',
+            cancelButtonAriaLabel: 'Register',
+        }).then((result) => {
+            if(!result.value && result.DismissReason !== undefined && result.dismiss === result.DismissReason.cancel) newUser = true;
+            if(result.value) {
+                swal({
+                    title: (result.value) ? "Sign in" : "Register",
+                    type: 'question',
+                    html:
+                        '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+                        '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    focusConfirm: true,
+                    confirmButtonText:
+                        '<strong>OK</strong>',
+                    confirmButtonAriaLabel: 'OK',
+                    cancelButtonText:
+                        '<strong>Cancel</strong>',
+                    cancelButtonAriaLabel: 'Cancel',
+                    preConfirm: function () {
+                        username = document.getElementById('swal-input1').value;
+                        password = document.getElementById('swal-input2').value;
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        socket.emit('requestsalt', (error, data) => {
+                            let salt = data;
+                            let hashedpw = md5(username + salt + password);
+                            if (!newUser) {
+                                socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
+                                    if (error) swal(error);
+                                    else {
+                                        socket.emit('customClientInfo', {
+                                            customId: username,
+                                        });
+                                        createUserObj(username);
+                                        swal(data);
+                                    }
+                                });
+                            } else if (result.DismissReason.cancel) {
+                                socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
+                                    if (error) swal(error);
+                                    else {
+                                        socket.emit('customClientInfo', {
+                                            customId: username,
+                                        });
+                                        createUserObj(username);
+                                        swal(data);
+                                    }
+                                });
+                            }
+                        })
+                    }
+                })
+            }
+        });
+    }
 }
 
 function zipFilesAndDownload(){
@@ -469,37 +484,41 @@ function zipFilesAndDownload(){
 
 
 function addFriend() {
-    let username;
-    swal({
-        title: "Add friend",
-        type: 'question',
-        html:'<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>',
-        showCloseButton: true,
-        showCancelButton: true,
-        focusConfirm: true,
-        confirmButtonText:
-            '<strong>Add</strong>',
-        confirmButtonAriaLabel: 'OK',
-        cancelButtonText:
-            '<strong>Cancel</strong>',
-        cancelButtonAriaLabel: 'Cancel',
-        inputValidator: (value) => {
-            return !value && 'No username specified'
-        },
-        preConfirm: () => {
-            username = document.getElementById("swal-input1").value;
-        }
-    }).then((result)=> {
-        if(result.value){
-            socket.emit('addfriend', {toAdd: username},(error, data) => {
-                if(error){
-                    swal(error);
-                } else {
-                    swal(data);
-                }
-            });
-        }
-    });
+    if(currentUser !== null && currentUser !== undefined) {
+        let username;
+        swal({
+            title: "Add friend",
+            type: 'question',
+            html: '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            confirmButtonText:
+                '<strong>Add</strong>',
+            confirmButtonAriaLabel: 'OK',
+            cancelButtonText:
+                '<strong>Cancel</strong>',
+            cancelButtonAriaLabel: 'Cancel',
+            inputValidator: (value) => {
+                return !value && 'No username specified'
+            },
+            preConfirm: () => {
+                username = document.getElementById("swal-input1").value;
+            }
+        }).then((result) => {
+            if (result.value) {
+                socket.emit('addfriend', {toAdd: username}, (error, data) => {
+                    if (error) {
+                        swal(error);
+                    } else {
+                        swal(data);
+                    }
+                });
+            }
+        });
+    } else {
+        swal({text:"You are not logged in!", type:'warning'});
+    }
 }
 
 
@@ -611,6 +630,9 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     }
     if(e.target.id == 'loginbtn') {
         login();
+    }
+    if(e.target.id == 'connectbtn') {
+        connectToFriend();
     }
 });
 
