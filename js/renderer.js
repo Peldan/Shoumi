@@ -26,6 +26,7 @@ let imgdiv = $('#bild');
 let autoShare = false;
 let settings = [[ 'autoShare', false]]
 let settingsMap = new Map(settings);
+let currentUser = null;
 
 //TODO user accounts with pre-defined connections?
 //TODO chat
@@ -34,9 +35,6 @@ document.onkeydown = function(event) {
     event = event || window.event;
     if (event.key === "o") {
         openDialog();
-    }
-    else if (event.code === "ArrowUp" && isFullscreen){
-        //TODO bläddra bakåt i fullscreen
     }
     else if (event.code === "Space" && isFullscreen) {
         flipbg();
@@ -238,41 +236,6 @@ function enableOverview(){
     currentBg = 0;
 }
 
-function requestConnection(){
-    users = [];
-    socket.emit('requestclients', (error, data) => {
-        users = data;
-        let customIds = [];
-        users.forEach((user) => {
-            customIds.push(user.customId);
-        });
-        console.log("Custom ids: " + customIds);
-        if(!isConnected) {
-            prompt({
-                title: 'Choose a peer',
-                label: 'Target ID: ',
-                value: 'http://example.org',
-                type: 'select',
-                selectOptions: customIds
-            })
-                .then((r) => {
-                    if (r === null) {
-                        console.log('user cancelled');
-                    } else {
-                        didRequest = true;
-                        console.log('Chosen peer: ', users[r].customId + " with ID: " + users[r].clientId);
-                        socket.emit('connectionrequest', {
-                            destpeer: users[r]
-                        });
-                    }
-                })
-                .catch(console.error);
-        } else {
-            confirm("You are currently connected to " + connectedTo);
-        }
-    });
-}
-
 function loadSettings(filename){
     fs.readFile("settings.cfg", (err, data) => {
         if(err){
@@ -337,110 +300,151 @@ function deleteSelected(){
     selectedImages = [];
 }
 
-function enterName(){
-    prompt({
-        title: 'Enter your name',
-        label: 'Name: ',
-    })
-        .then((input) => {
-            if (input === null) {
-                console.log('user cancelled');
-            } else {
-                chosenName = input;
-                socket.emit('customClientInfo', {
-                    customId: input,
-                });
+function connectToFriend(){
+    if(currentUser !== null && currentUser !== undefined){
+        let onlinefriends = [];
+        socket.emit('getonlinefriends', {username: currentUser.username}, (error, data) => {
+            for(let i = 0; i < currentUser.friendslist.length; i++){
+                for(let j = 0; j < data.rows.length; j++){
+                    let friendobj = JSON.parse(JSON.stringify(data.rows[j]));
+                    if(friendobj.username === currentUser.friendslist[i].username){
+                        onlinefriends.push(friendobj.username);
+                    }
+                }
             }
+            swal({
+                title: "Start an image-sharing session with a friend",
+                text: "Online friends",
+                type: 'question',
+                input: 'select',
+                inputOptions: onlinefriends,
+                showCloseButton: true,
+                showCancelButton: true,
+                focusConfirm: true,
+            }).then((result) => {
+                if (result.value) {
+                    socket.emit('connecttofriend', {friend: onlinefriends[swal.getInput().selectedIndex]}, (error, data) => {
+                        if(error) swal(error);
+                        else {
+                            currentUser.connectedTo = onlinefriends[swal.getInput().selectedIndex];
+                            swal(data);
+                        }
+                    });
+                }
+            });
         })
-        .catch(console.error);
+    } else {
+        swal({text: "You are not logged in!", type: "warning"})
+    }
 }
 
-function login(){ //TODO register and sign-in are very similar, could probably smash them into the same?
-    let username;
-    let password;
-    swal({
-        title: "Account",
-        type: 'info',
-        showCloseButton: true,
-        showCancelButton: true,
-        focusConfirm: false,
-        confirmButtonText:
-            '<strong>Sign in</strong>',
-        confirmButtonAriaLabel: 'Sign in',
-        cancelButtonText:
-            '<strong>Register</strong>',
-        cancelButtonAriaLabel: 'Register',
-    }).then((result) =>{
-        if(result.value){
-            swal({
-                title: "Sign in",
-                type: 'question',
-                html:
-                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-                showCloseButton: true,
-                showCancelButton: true,
-                focusConfirm: false,
-                confirmButtonText:
-                    '<strong>OK</strong>',
-                confirmButtonAriaLabel: 'OK',
-                cancelButtonText:
-                    '<strong>Cancel</strong>',
-                cancelButtonAriaLabel: 'Cancel',
-                preConfirm: function() {
-                    username = document.getElementById('swal-input1').value;
-                    password = document.getElementById('swal-input2').value;
+function createUserObj(username){
+    currentUser = {
+        username: username,
+        friendslist: [],
+        connected: false,
+        connectedTo: null,
+    }
+    socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
+        if (error) swal(error);
+        else {
+            for (let i = 0; i < data.length; i++) {
+                let object = data[i];
+                for (let property in object) {
+                    let friend = {
+                        username: object[property],
+                        isOnline: false,
+                    }
+                    currentUser.friendslist.push(friend);
                 }
-            }).then((result) => {
-                if(result.value){
-                    socket.emit('requestsalt', (error, data) => {
-                        let salt = data;
-                        let hashedpw = md5(username + salt + password);
-                        socket.emit('hashedpw', { username: username, hashedpw: hashedpw }, (error, data) => {
-                            if(error)swal(error);
-                            else {
-                                swal(data);
-                            }
-                        });
-                    })
-                }
-            })
-        } else if(result.dismiss === swal.DismissReason.cancel){
-            swal({
-                title: "Register",
-                type: 'question',
-                html:
-                    '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                    '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-                showCloseButton: true,
-                showCancelButton: true,
-                focusConfirm: false,
-                confirmButtonText:
-                    '<strong>OK</strong>',
-                confirmButtonAriaLabel: 'OK',
-                cancelButtonText:
-                    '<strong>Cancel</strong>',
-                cancelButtonAriaLabel: 'Cancel',
-                preConfirm: function() {
-                    username = document.getElementById('swal-input1').value;
-                    password = document.getElementById('swal-input2').value;
-                }
-            }).then((result) => {
-               if(result.value){
-                   socket.emit('requestsalt', (error, data) => {
-                       let salt = data;
-                       let hashedpw = md5(username + salt + password);
-                       socket.emit('createuser', { username: username, hashedpw: hashedpw }, (error, data) => {
-                           if(error)swal(error);
-                           else {
-                               swal(data);
-                           }
-                       });
-                   });
-               }
-            });
+            }
         }
-    })
+    });
+}
+
+
+function login(){
+    if(currentUser !== null && currentUser !== undefined){
+        swal({
+            title: "Logged in as " + currentUser.username,
+            type: 'info',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            text: currentUser.friendslist + "\n" + (connectedTo) ? "You are currently connected to: " + connectedTo : "",
+        })
+    } else {
+        let username = "";
+        let password = "";
+        let newUser = false;
+        swal({
+            title: "Account",
+            type: 'info',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            confirmButtonText:
+                '<strong>Sign in</strong>',
+            confirmButtonAriaLabel: 'Sign in',
+            cancelButtonText:
+                '<strong>Register</strong>',
+            cancelButtonAriaLabel: 'Register',
+        }).then((result) => {
+            if(!result.value && result.DismissReason !== undefined && result.dismiss === result.DismissReason.cancel) newUser = true;
+            if(result.value) {
+                swal({
+                    title: (result.value) ? "Sign in" : "Register",
+                    type: 'question',
+                    html:
+                        '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+                        '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    focusConfirm: true,
+                    confirmButtonText:
+                        '<strong>OK</strong>',
+                    confirmButtonAriaLabel: 'OK',
+                    cancelButtonText:
+                        '<strong>Cancel</strong>',
+                    cancelButtonAriaLabel: 'Cancel',
+                    preConfirm: function () {
+                        username = document.getElementById('swal-input1').value;
+                        password = document.getElementById('swal-input2').value;
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        socket.emit('requestsalt', (error, data) => {
+                            let salt = data;
+                            let hashedpw = md5(username + salt + password);
+                            if (!newUser) {
+                                socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
+                                    if (error) swal(error);
+                                    else {
+                                        socket.emit('customClientInfo', {
+                                            customId: username,
+                                        });
+                                        createUserObj(username);
+                                        swal(data);
+                                    }
+                                });
+                            } else if (result.DismissReason.cancel) {
+                                socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
+                                    if (error) swal(error);
+                                    else {
+                                        socket.emit('customClientInfo', {
+                                            customId: username,
+                                        });
+                                        createUserObj(username);
+                                        swal(data);
+                                    }
+                                });
+                            }
+                        })
+                    }
+                })
+            }
+        });
+    }
 }
 
 function zipFilesAndDownload(){
@@ -459,6 +463,45 @@ function zipFilesAndDownload(){
     imgzip.generateAsync({type:"blob"}).then(function(content) {
         saveAs(content, "sharedimages.zip");
     });
+}
+
+
+function addFriend() {
+    if(currentUser !== null && currentUser !== undefined) {
+        let username;
+        swal({
+            title: "Add friend",
+            type: 'question',
+            html: '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>',
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: true,
+            confirmButtonText:
+                '<strong>Add</strong>',
+            confirmButtonAriaLabel: 'OK',
+            cancelButtonText:
+                '<strong>Cancel</strong>',
+            cancelButtonAriaLabel: 'Cancel',
+            inputValidator: (value) => {
+                return !value && 'No username specified'
+            },
+            preConfirm: () => {
+                username = document.getElementById("swal-input1").value;
+            }
+        }).then((result) => {
+            if (result.value) {
+                socket.emit('addfriend', {toAdd: username}, (error, data) => {
+                    if (error) {
+                        swal(error);
+                    } else {
+                        swal(data);
+                    }
+                });
+            }
+        });
+    } else {
+        swal({text:"You are not logged in!", type:'warning'});
+    }
 }
 
 
@@ -556,8 +599,8 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     if(e.target.id === 'selectbtn'){
         selectMode();
     }
-    if(e.target.id == 'p2pbtn'){
-        requestConnection();
+    if(e.target.id == 'friendbtn'){
+        addFriend();
     }
     if(e.target.id == 'sharebtn') {
         sharePhotos();
@@ -570,6 +613,9 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
     }
     if(e.target.id == 'loginbtn') {
         login();
+    }
+    if(e.target.id == 'connectbtn') {
+        connectToFriend();
     }
 });
 
@@ -587,7 +633,6 @@ $( document ).ready(function (){
         case "index.html":
             socket = io.connect('https://shoumiserver.herokuapp.com');
             startSocketListeners();
-            enterName();
             globalcanvas = document.createElement("canvas");
             globalcanvas.id = "globalcanvas";
             main = document.getElementsByTagName("main")[0];
@@ -654,13 +699,12 @@ function startSocketListeners() {
     socket.on('connectionsuccess', function(data){
         console.log("Did request: " + didRequest);
         if(didRequest) {
-            alert("You are now connected with user " + data.dest.customId);
+            swal("You are now connected with user " + data.dest);
         } else {
-            alert("User " + data.requestee.customId + " has initiated a connection with you");
+            swal("User " + data.requestee + " has initiated a connection with you");
         }
         didRequest = false;
         isConnected = true;
-        connectedTo = data.dest.clientId;
     });
 
     socket.on('imgByClient', function(data) {
@@ -669,6 +713,6 @@ function startSocketListeners() {
     });
 
     socket.on('requestConnectedTo', function(callback) {
-        callback(null, connectedTo);
+        callback(null, currentUser.connectedTo);
     });
 }
