@@ -14,9 +14,7 @@ let header, cardarea, currentSelection, lastModifiedCanvas, imgCanvasList, layer
 let currentBg = 0;
 let isFullscreen = false;
 let didRequest = false;
-let isConnected = false;
 let connectedTo = null;
-let chosenName = null;
 let selectedImages = [];
 let infoCards = [];
 let users = [];
@@ -28,7 +26,6 @@ let settings = [[ 'autoShare', false]]
 let settingsMap = new Map(settings);
 let currentUser = null;
 
-//TODO user accounts with pre-defined connections?
 //TODO chat
 
 document.onkeydown = function(event) {
@@ -47,6 +44,7 @@ document.onkeydown = function(event) {
         duplicateSelection();
     }
 }
+
 
 function clearSelection(){
     let ctx = lastModifiedCanvas.getContext('2d');
@@ -258,35 +256,47 @@ function loadSettings(filename){
 }
 
 function sharePhotos(){
-    if(autoShare) {
-        for (let i = 0; i < images.length; i++) {
-            fs.readFile(images[i].file, function (err, data) {
-                if(!images[i].isShared) {
-                    images[i].isShared = true;
-                    socket.emit('imgByClient', { image: true, buffer: data });
-                }
-            });
+    if(images.length == 0) swal({text: "There are no images to share", type: "warning"}); return
+
+    if(currentUser !== null && currentUser !== undefined && currentUser.isConnected){
+        if(autoShare) {
+            for (let i = 0; i < images.length; i++) {
+                fs.readFile(images[i].file, function (err, data) {
+                    if(!images[i].isShared) {
+                        images[i].isShared = true;
+                        socket.emit('imgByClient', { image: true, buffer: data });
+                    }
+                });
+            }
         }
-    }
-    else if(!autoShare && selectedImages.length > 0){
-        for(let x of selectedImages){
-            if($(x).attr('class') === 'imgcanvas'){
-                let curr = $(x)[0];
-                for(let y of images){
-                    if(y.imgcanvas.getContext('2d') === curr.getContext('2d')){
-                        if(!y.isShared){
-                            fs.readFile(y.file, function(err, data) {
-                                y.isShared = true;
-                                socket.emit('imgByClient', { image: true, buffer: data});
-                            });
+        else if(!autoShare && selectedImages.length > 0){
+            for(let x of selectedImages){
+                if($(x).attr('class') === 'imgcanvas'){
+                    let curr = $(x)[0];
+                    for(let y of images){
+                        if(y.imgcanvas.getContext('2d') === curr.getContext('2d')){
+                            if(!y.isShared){
+                                fs.readFile(y.file, function(err, data) {
+                                    y.isShared = true;
+                                    socket.emit('imgByClient', { image: true, buffer: data});
+                                });
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    else {
-        alert("You haven't enabled auto-share in settings. You can still share images, but you need to select the ones you want to share first.");
+        else {
+            swal({
+                text: "You haven't enabled auto-share in settings. You can still share images, but you need to select the ones you want to share first.",
+                type: "warning"
+            });
+        }
+    } else {
+        swal({
+            text: "You must be connected to a friend or logged in to use this function",
+            type: "warning"
+        })
     }
 }
 
@@ -321,14 +331,13 @@ function connectToFriend(){
                 showCloseButton: true,
                 showCancelButton: true,
                 focusConfirm: true,
+                preConfirm: () => {
+                    didRequest = true;
+                }
             }).then((result) => {
                 if (result.value) {
-                    socket.emit('connecttofriend', {friend: onlinefriends[swal.getInput().selectedIndex]}, (error, data) => {
+                    socket.emit('connecttofriend', {user: currentUser.username, friend: onlinefriends[swal.getInput().selectedIndex]}, (error, data) => {
                         if(error) swal(error);
-                        else {
-                            currentUser.connectedTo = onlinefriends[swal.getInput().selectedIndex];
-                            swal(data);
-                        }
                     });
                 }
             });
@@ -362,21 +371,95 @@ function createUserObj(username){
     });
 }
 
+function showUserInfo(){
+    let infotext = "";
+    if(currentUser.isConnected){
+        infotext = "You are currently connected to " + currentUser.connectedTo;
+    } else {
+        infotext = "";
+    }
+    swal({
+        title: "Logged in as " + currentUser.username,
+        type: 'info',
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: true,
+        text: infotext,
+    })
+}
 
-function login(){
-    if(currentUser !== null && currentUser !== undefined){
+
+function login(username, hashedpw){
+    socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
+        if (error) swal(error);
+        else {
+            socket.emit('customClientInfo', {
+                customId: username,
+            });
+            createUserObj(username);
+            swal(data);
+        }
+    });
+}
+
+function register(username, hashedpw){
+    socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
+        if (error) swal(error);
+        else {
+            socket.emit('customClientInfo', {
+                customId: username,
+            });
+            createUserObj(username);
+            swal(data);
+        }
+    });
+}
+
+function showRegisterSignInDialog(result, username, password){
+    let newUser = false;
+    if(!result.value && result.DismissReason !== undefined && result.dismiss === result.DismissReason.cancel) newUser = true;
+    if(result.value) {
         swal({
-            title: "Logged in as " + currentUser.username,
-            type: 'info',
+            title: (result.value) ? "Sign in" : "Register",
+            type: 'question',
+            html:
+                '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+                '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
             showCloseButton: true,
             showCancelButton: true,
             focusConfirm: true,
-            text: currentUser.friendslist + "\n" + (connectedTo) ? "You are currently connected to: " + connectedTo : "",
+            confirmButtonText:
+                '<strong>OK</strong>',
+            confirmButtonAriaLabel: 'OK',
+            cancelButtonText:
+                '<strong>Cancel</strong>',
+            cancelButtonAriaLabel: 'Cancel',
+            preConfirm: function () {
+                username = document.getElementById('swal-input1').value;
+                password = document.getElementById('swal-input2').value;
+            }
+        }).then((result) => {
+            if (result.value) {
+                socket.emit('requestsalt', (error, data) => {
+                    let salt = data;
+                    let hashedpw = md5(username + salt + password);
+                    if (!newUser) {
+                        login(username, hashedpw);
+                    } else if (result.DismissReason.cancel) {
+                        register(username, hashedpw);
+                    }
+                })
+            }
         })
+    }
+}
+
+function loginDialog(){
+    if(currentUser !== null && currentUser !== undefined){
+        showUserInfo();
     } else {
         let username = "";
         let password = "";
-        let newUser = false;
         swal({
             title: "Account",
             type: 'info',
@@ -390,59 +473,7 @@ function login(){
                 '<strong>Register</strong>',
             cancelButtonAriaLabel: 'Register',
         }).then((result) => {
-            if(!result.value && result.DismissReason !== undefined && result.dismiss === result.DismissReason.cancel) newUser = true;
-            if(result.value) {
-                swal({
-                    title: (result.value) ? "Sign in" : "Register",
-                    type: 'question',
-                    html:
-                        '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                        '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-                    showCloseButton: true,
-                    showCancelButton: true,
-                    focusConfirm: true,
-                    confirmButtonText:
-                        '<strong>OK</strong>',
-                    confirmButtonAriaLabel: 'OK',
-                    cancelButtonText:
-                        '<strong>Cancel</strong>',
-                    cancelButtonAriaLabel: 'Cancel',
-                    preConfirm: function () {
-                        username = document.getElementById('swal-input1').value;
-                        password = document.getElementById('swal-input2').value;
-                    }
-                }).then((result) => {
-                    if (result.value) {
-                        socket.emit('requestsalt', (error, data) => {
-                            let salt = data;
-                            let hashedpw = md5(username + salt + password);
-                            if (!newUser) {
-                                socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
-                                    if (error) swal(error);
-                                    else {
-                                        socket.emit('customClientInfo', {
-                                            customId: username,
-                                        });
-                                        createUserObj(username);
-                                        swal(data);
-                                    }
-                                });
-                            } else if (result.DismissReason.cancel) {
-                                socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
-                                    if (error) swal(error);
-                                    else {
-                                        socket.emit('customClientInfo', {
-                                            customId: username,
-                                        });
-                                        createUserObj(username);
-                                        swal(data);
-                                    }
-                                });
-                            }
-                        })
-                    }
-                })
-            }
+            showRegisterSignInDialog(result, username, password);
         });
     }
 }
@@ -612,7 +643,7 @@ $('#toolarea').on("click", '.toolbtn', function(e) {
         zipFilesAndDownload();
     }
     if(e.target.id == 'loginbtn') {
-        login();
+        loginDialog();
     }
     if(e.target.id == 'connectbtn') {
         connectToFriend();
@@ -683,6 +714,8 @@ $( document ).ready(function (){
     }
 });
 
+
+
 function startSocketListeners() {
     socket.on('newuser', function(data) {
         users = data.userlist;
@@ -697,14 +730,15 @@ function startSocketListeners() {
     });
 
     socket.on('connectionsuccess', function(data){
-        console.log("Did request: " + didRequest);
         if(didRequest) {
             swal("You are now connected with user " + data.dest);
+            currentUser.connectedTo = data.dest;
         } else {
-            swal("User " + data.requestee + " has initiated a connection with you");
+            swal("User " + data.requester + " has initiated a connection with you");
+            currentUser.connectedTo = data.requester;
         }
+        currentUser.isConnected = true;
         didRequest = false;
-        isConnected = true;
     });
 
     socket.on('imgByClient', function(data) {
@@ -715,4 +749,5 @@ function startSocketListeners() {
     socket.on('requestConnectedTo', function(callback) {
         callback(null, currentUser.connectedTo);
     });
+
 }
