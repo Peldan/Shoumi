@@ -36,6 +36,7 @@ exports.startSocketListeners = function() {
     });
 
     renderer.socket.on('imgByClient', function(data) {
+        console.log(data);
         let fileNames = [data];
         renderer.displayImage(fileNames, true);
     });

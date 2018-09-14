@@ -218,39 +218,13 @@ function sharePhotos(){
         swal({text: "There are no images to share", type: "warning"});
         return;
     }
-    if(currentUser !== null && currentUser !== undefined && currentUser.isConnected){
-        if(autoShare) {
-            for (let i = 0; i < images.length; i++) {
-                fs.readFile(images[i].file, function (err, data) {
-                    if(!images[i].isShared) {
-                        images[i].isShared = true;
-                        network.sendImage(data, currentUser.connectedToId);
-                        //exports.socket.emit('imgByClient', { image: true, buffer: data });
-                    }
-                });
-            }
-        }
-        else if(!autoShare){
-            for(let x of selectedImages){
-                if($(x).attr('class') === 'imgcanvas'){
-                    let curr = $(x)[0];
-                    for(let y of images){
-                        if(y.imgcanvas.getContext('2d') === curr.getContext('2d')){
-                            if(!y.isShared){
-                                fs.readFile(y.file, function(err, data) {
-                                    y.isShared = true;
-                                    network.sendImage(data);
-                                });
-                            }
-                        }
-                    }
+    if(currentUser !== null && currentUser !== undefined && currentUser.isConnected) {
+        for (let i = 0; i < images.length; i++) {
+            fs.readFile(images[i].file, function (err, data) {
+                if (!images[i].isShared) {
+                    images[i].isShared = true;
+                    network.sendImage(data, currentUser.connectedToId);
                 }
-            }
-        }
-        else {
-            swal({
-                text: "You haven't enabled auto-share in settings. You can still share images, but you need to select the ones you want to share first.",
-                type: "warning"
             });
         }
     } else {
