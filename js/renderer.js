@@ -2,21 +2,17 @@
 
 let { saveAs } = require('file-saver/FileSaver');
 const {dialog} = require('electron').remote;
-const prompt = require('electron-prompt');
-const isDev = require('electron-is-dev');
 const fs = require('fs');
-const notifier = require('node-notifier');
 const swal = require('sweetalert2')
 let JSZip = require('jszip');
 let md5 = require('md5');
 let socket;
 let electron = require('electron');
 let {ipcRenderer} = require('electron');
-let header, cardarea, currentSelection, lastModifiedCanvas, imgCanvasList, layerCanvasList, main, globalcanvas;
+let header, cardarea, currentSelection, imgCanvasList, main, globalcanvas;
 let currentBg = 0;
 let isFullscreen = false;
 let didRequest = false;
-let connectedTo = null;
 let selectedImages = [];
 let infoCards = [];
 let users = [];
@@ -43,25 +39,8 @@ document.onkeydown = function(event) {
     else if (event.key === "Escape" && isFullscreen) {
         enableOverview();
     }
-    else if (event.key === "Enter" && (currentSelection !== null && currentSelection !== 'undefined')){
-        clearSelection();
-        duplicateSelection();
-    }
 }
 
-
-function clearSelection(){
-    let ctx = lastModifiedCanvas.getContext('2d');
-    ctx.beginPath();
-    ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
-}
-
-function duplicateSelection() {
-    let ctx = globalcanvas.getContext('2d');
-    createImageBitmap(currentSelection).then(function(bitmap) {
-        ctx.drawImage(bitmap, 0, 0);
-    })
-}
 
 function flipbg(){
     if(currentBg === (imgCanvasList.length)){
@@ -121,14 +100,10 @@ exports.displayImage = function (fileNames, isShared) {
         const img = new Image();
         img.src = src;
         let firstCanvas = document.createElement('canvas'); // I am using canvas as 'layers', i.e one canvas is for
-        let secondCanvas = document.createElement('canvas'); // displaying the image, the other canvas handles "drawing" etc.
         let ctx = firstCanvas.getContext('2d');
         firstCanvas.className = 'imgcanvas';
-        secondCanvas.className = 'layercanvas';
         firstCanvas.width = 1000;
         firstCanvas.height = 800;
-        secondCanvas.width = firstCanvas.width;
-        secondCanvas.height = firstCanvas.height;
         let newrow = document.createElement('div');
         newrow.className = 'row center-align cr';
         imgdiv.append(newrow);
@@ -144,14 +119,10 @@ exports.displayImage = function (fileNames, isShared) {
                 centerx, centery, img.width * ratio, img.height * ratio);
         };
         newrow.appendChild(firstCanvas);
-        newrow.appendChild(secondCanvas);
         createImageObject(src, isShared, firstCanvas);
     });
-
     imgCanvasList = document.getElementsByClassName('imgcanvas');
-    layerCanvasList = document.getElementsByClassName('layercanvas');
-    window.scrollTo(0, $(layerCanvasList[layerCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
-    if(isShared){ notifyUser("img"); }
+    window.scrollTo(0, $(imgCanvasList[imgCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
     addCanvasListener();
     if(autoShare){
         sharePhotos();
@@ -159,7 +130,7 @@ exports.displayImage = function (fileNames, isShared) {
 }
 
 function addCanvasListener(){
-    $('.layercanvas').off().on('click', function(evt){
+    $('.imgcanvas').off().on('click', function(evt){
         evt.preventDefault();
         evt.stopPropagation();
         let target = $(this);
@@ -167,28 +138,11 @@ function addCanvasListener(){
         if(target.css('border') !== "2px solid rgb(255, 0, 0)" || target.css('border') == null){
             $(this).css('border', "solid 2px red");
             selectedImages.push(target);
-            selectedImages.push(target.siblings(".imgcanvas"));
         } else {
             $(this).css('border', "solid 0px red");
             selectedImages.splice(selectedImages.indexOf(target), 1);
-            selectedImages.splice(selectedImages.indexOf(target.siblings(".imgcanvas")), 1);
         }
     })
-}
-
-function notifyUser(event){
-    switch(event){
-        case "img":
-            notifier.notify({
-                title: 'Image received',
-                message: 'Image received from ' + connectedTo.customId,
-                icon: (isDev) ? './build/icon.ico' : process.resourcesPath + '\\icon.ico',
-                id: 'com.example.shoumi',
-            });
-            break;
-        default:
-            break;
-    }
 }
 
 function createCardObj(text, options){
@@ -264,14 +218,15 @@ function sharePhotos(){
         swal({text: "There are no images to share", type: "warning"});
         return;
     }
+    let imgObjs = [];
     if(currentUser !== null && currentUser !== undefined && currentUser.isConnected){
-        console.log("hit kom vi iaf");
         if(autoShare) {
             for (let i = 0; i < images.length; i++) {
                 fs.readFile(images[i].file, function (err, data) {
                     if(!images[i].isShared) {
                         images[i].isShared = true;
-                        exports.socket.emit('imgByClient', { image: true, buffer: data });
+                        imgObjs.push({ image: true, buffer: data });
+                        //exports.socket.emit('imgByClient', { image: true, buffer: data });
                     }
                 });
             }
@@ -285,7 +240,8 @@ function sharePhotos(){
                             if(!y.isShared){
                                 fs.readFile(y.file, function(err, data) {
                                     y.isShared = true;
-                                    exports.socket.emit('imgByClient', { image: true, buffer: data});
+                                    imgObjs.push({ image: true, buffer: data });
+                                    //exports.socket.emit('imgByClient', { image: true, buffer: data});
                                 });
                             }
                         }
@@ -299,6 +255,7 @@ function sharePhotos(){
                 type: "warning"
             });
         }
+        network.sendImages(imgObjs);
     } else {
         swal({
             text: "You must be connected to a friend or logged in to use this function",
@@ -549,75 +506,7 @@ function addFriend() {
 }
 
 
-function selectMode(){
-    function changeCursor(cursor){
-        for(let i = 0; i < layerCanvasList.length; i++){
-            let layer = layerCanvasList[i];
-            layer.style.cursor = cursor;
-        }
-    }
-    if(imgCanvasList != undefined && imgCanvasList.length > 0){
-        let layercanvas = $('.layercanvas');
-        let startx;
-        let starty;
-        let currx;
-        let curry;
-        let c;
-        let ctx;
-        changeCursor("crosshair");
-        layercanvas.mousedown(function(e){
-            startx = e.offsetX;
-            starty = e.offsetY;
-            $(this).data('mouseheld', true);
-            if(lastModifiedCanvas !== undefined && lastModifiedCanvas !== $(this)[0]) {
-                ctx = lastModifiedCanvas.getContext('2d');
-                ctx.beginPath();
-                ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
-            }
-        })
-        layercanvas.mouseup(function(){
-            ctx = $(this)[0].getContext('2d');
-            c = $(this)[0];
-            $(this).data('mouseheld', false);
-            if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
-                let imgcanvas = $(this).siblings()[0];
-                let imgcanvasctx = imgcanvas.getContext('2d');
-                currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
-                lastModifiedCanvas = $(this)[0];
-            } else {
-                currentSelection = null;
-            }
-            startx = null;
-            starty = null;
-            currx = null;
-            curry = null;
-        })
-        layercanvas.mouseleave(function(){
-            if($(this).data('mouseheld')){
-                ctx = $(this)[0].getContext('2d');
-                ctx.beginPath();
-                ctx.clearRect(0, 0, c.width, c.height);
-            }
-            $(this).data('mouseheld', false);
-        })
-        $('canvas').mousemove(function(e){
-            if($(this).data('mouseheld')){
-                c = $(this)[0];
-                ctx = $(this)[0].getContext('2d');
-                ctx.beginPath();
-                ctx.clearRect(0, 0, c.width, c.height);
-                ctx.strokeStyle="red";
-                currx = e.offsetX;
-                curry = e.offsetY;
-                ctx.rect(startx, starty, currx - startx, curry - starty);
-                ctx.stroke();
-            }
-        })
-    } else {
-        createCardObj("You need to import images before using this", ['Ok, got it!']);
-        displayTip();
-    }
-}
+
 
 
 ipcRenderer.on('image-msg', (event, fileName) => {
@@ -640,9 +529,6 @@ $('nav').on("click", "a", function(e) {
 
 $('#toolarea').on("click", '.toolbtn', function(e) {
     e.preventDefault();
-    if(e.target.id === 'selectbtn'){
-        selectMode();
-    }
     if(e.target.id == 'friendbtn'){
         addFriend();
     }
@@ -751,3 +637,88 @@ exports.setDidRequest = function(bool) {
 exports.didRequest = function() {
     return didRequest;
 }
+
+// Don't know if I want to keep this functionality..
+
+/*function clearSelection(){
+    let ctx = lastModifiedCanvas.getContext('2d');
+    ctx.beginPath();
+    ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
+}
+
+function duplicateSelection() {
+    let ctx = globalcanvas.getContext('2d');
+    createImageBitmap(currentSelection).then(function(bitmap) {
+        ctx.drawImage(bitmap, 0, 0);
+    })
+}*/
+
+/*function selectMode(){
+    function changeCursor(cursor){
+        for(let i = 0; i < layerCanvasList.length; i++){
+            let layer = layerCanvasList[i];
+            layer.style.cursor = cursor;
+        }
+    }
+    if(imgCanvasList != undefined && imgCanvasList.length > 0){
+        let layercanvas = $('.layercanvas');
+        let startx;
+        let starty;
+        let currx;
+        let curry;
+        let c;
+        let ctx;
+        changeCursor("crosshair");
+        layercanvas.mousedown(function(e){
+            startx = e.offsetX;
+            starty = e.offsetY;
+            $(this).data('mouseheld', true);
+            if(lastModifiedCanvas !== undefined && lastModifiedCanvas !== $(this)[0]) {
+                ctx = lastModifiedCanvas.getContext('2d');
+                ctx.beginPath();
+                ctx.clearRect(0, 0, lastModifiedCanvas.width, lastModifiedCanvas.height);
+            }
+        })
+        layercanvas.mouseup(function(){
+            ctx = $(this)[0].getContext('2d');
+            c = $(this)[0];
+            $(this).data('mouseheld', false);
+            if(currx != undefined && curry != undefined && !(currx == startx && curry == starty)){
+                let imgcanvas = $(this).siblings()[0];
+                let imgcanvasctx = imgcanvas.getContext('2d');
+                currentSelection = imgcanvasctx.getImageData(startx, starty, (currx - startx), (curry - starty));
+                lastModifiedCanvas = $(this)[0];
+            } else {
+                currentSelection = null;
+            }
+            startx = null;
+            starty = null;
+            currx = null;
+            curry = null;
+        })
+        layercanvas.mouseleave(function(){
+            if($(this).data('mouseheld')){
+                ctx = $(this)[0].getContext('2d');
+                ctx.beginPath();
+                ctx.clearRect(0, 0, c.width, c.height);
+            }
+            $(this).data('mouseheld', false);
+        })
+        $('canvas').mousemove(function(e){
+            if($(this).data('mouseheld')){
+                c = $(this)[0];
+                ctx = $(this)[0].getContext('2d');
+                ctx.beginPath();
+                ctx.clearRect(0, 0, c.width, c.height);
+                ctx.strokeStyle="red";
+                currx = e.offsetX;
+                curry = e.offsetY;
+                ctx.rect(startx, starty, currx - startx, curry - starty);
+                ctx.stroke();
+            }
+        })
+    } else {
+        createCardObj("You need to import images before using this", ['Ok, got it!']);
+        displayTip();
+    }
+}*/

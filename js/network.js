@@ -1,12 +1,14 @@
 'use strict';
 
 let renderer = require('./renderer');
-exports.test = function(){
-    console.log(renderer.socket);
+
+exports.sendImages = function(images){
+    renderer.socket.emit('bulkImgsByClient', {imgs: images});
 }
 
 exports.startSocketListeners = function() {
     renderer.socket.on('newuser', function(data) {
+        console.log("hallå");
         renderer.setUsers(data.userlist);
     });
 
@@ -31,6 +33,7 @@ exports.startSocketListeners = function() {
     });
 
     renderer.socket.on('imgByClient', function(data) {
+        console.log("VAFAN");
         let fileNames = [data];
         renderer.displayImage(fileNames, true);
     });
