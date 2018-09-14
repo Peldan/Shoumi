@@ -218,14 +218,13 @@ function sharePhotos(){
         swal({text: "There are no images to share", type: "warning"});
         return;
     }
-    let imgObjs = [];
     if(currentUser !== null && currentUser !== undefined && currentUser.isConnected){
         if(autoShare) {
             for (let i = 0; i < images.length; i++) {
                 fs.readFile(images[i].file, function (err, data) {
                     if(!images[i].isShared) {
                         images[i].isShared = true;
-                        imgObjs.push({ image: true, buffer: data });
+                        network.sendImage({ image: true, buffer: data});
                         //exports.socket.emit('imgByClient', { image: true, buffer: data });
                     }
                 });
@@ -240,7 +239,7 @@ function sharePhotos(){
                             if(!y.isShared){
                                 fs.readFile(y.file, function(err, data) {
                                     y.isShared = true;
-                                    imgObjs.push({ image: true, buffer: data });
+                                    network.sendImage({ image: true, buffer: data});
                                     //exports.socket.emit('imgByClient', { image: true, buffer: data});
                                 });
                             }
@@ -255,7 +254,6 @@ function sharePhotos(){
                 type: "warning"
             });
         }
-        network.sendImages(imgObjs);
     } else {
         swal({
             text: "You must be connected to a friend or logged in to use this function",

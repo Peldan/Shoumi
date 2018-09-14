@@ -2,8 +2,8 @@
 
 let renderer = require('./renderer');
 
-exports.sendImages = function(images){
-    renderer.socket.emit('bulkImgsByClient', {imgs: images});
+exports.sendImage = function(image){
+    renderer.socket.emit('imgByClient', { image });
 }
 
 exports.startSocketListeners = function() {
