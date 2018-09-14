@@ -44,7 +44,7 @@
           <entry key="css" value="732" />
           <entry key="gitignore" value="44" />
           <entry key="html" value="1510" />
-          <entry key="js" value="33431" />
+          <entry key="js" value="33526" />
           <entry key="json" value="336" />
           <entry key="md" value="401" />
         </counts>
@@ -54,7 +54,7 @@
           <entry key="CSS" value="732" />
           <entry key="HTML" value="1515" />
           <entry key="JSON" value="336" />
-          <entry key="JavaScript" value="33426" />
+          <entry key="JavaScript" value="33521" />
           <entry key="Markdown" value="401" />
           <entry key="PLAIN_TEXT" value="44" />
         </counts>
@@ -110,20 +110,20 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/renderer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="387">
-              <caret line="228" column="9" lean-forward="true" selection-start-line="228" selection-start-column="9" selection-end-line="228" selection-end-column="9" />
+            <state relative-caret-position="251">
+              <caret line="226" column="104" lean-forward="true" selection-start-line="226" selection-start-column="104" selection-end-line="226" selection-end-column="104" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/network.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="19" column="38" lean-forward="true" selection-start-line="19" selection-start-column="38" selection-end-line="19" selection-end-column="38" />
+            <state relative-caret-position="85">
+              <caret line="5" column="66" lean-forward="true" selection-start-line="5" selection-start-column="66" selection-end-line="5" selection-end-column="66" />
             </state>
           </provider>
         </entry>
@@ -150,7 +150,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>isconnected</find>
       <find>You're</find>
       <find>sharephoto</find>
       <find>login(</find>
@@ -165,7 +164,6 @@
       <find>connecttofrie</find>
       <find>imgby</find>
       <find>currentuser</find>
-      <find>sharephotos</find>
       <find>register</find>
       <find>exports.</find>
       <find>prompt</find>
@@ -180,6 +178,8 @@
       <find>connectedTo</find>
       <find>sendimage</find>
       <find>network.</find>
+      <find>sharephotos</find>
+      <find>imgbyC</find>
     </findStrings>
     <replaceStrings>
       <replace>let</replace>
@@ -207,8 +207,8 @@
         <option value="$PROJECT_DIR$/package.json" />
         <option value="$PROJECT_DIR$/js/index.js" />
         <option value="$PROJECT_DIR$/index.html" />
-        <option value="$PROJECT_DIR$/js/network.js" />
         <option value="$PROJECT_DIR$/js/renderer.js" />
+        <option value="$PROJECT_DIR$/js/network.js" />
       </list>
     </option>
   </component>
@@ -389,12 +389,12 @@
       <workItem from="1536679159261" duration="13553000" />
       <workItem from="1536698919615" duration="6276000" />
       <workItem from="1536756463558" duration="7777000" />
-      <workItem from="1536932831836" duration="9195000" />
+      <workItem from="1536932831836" duration="9822000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="268181000" />
+    <option name="totallyTimeSpent" value="268808000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -562,17 +562,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/js/network.js">
+    <entry file="file://$PROJECT_DIR$/js/renderer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="19" column="38" lean-forward="true" selection-start-line="19" selection-start-column="38" selection-end-line="19" selection-end-column="38" />
+        <state relative-caret-position="251">
+          <caret line="226" column="104" lean-forward="true" selection-start-line="226" selection-start-column="104" selection-end-line="226" selection-end-column="104" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/js/renderer.js">
+    <entry file="file://$PROJECT_DIR$/js/network.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="387">
-          <caret line="228" column="9" lean-forward="true" selection-start-line="228" selection-start-column="9" selection-end-line="228" selection-end-column="9" />
+        <state relative-caret-position="85">
+          <caret line="5" column="66" lean-forward="true" selection-start-line="5" selection-start-column="66" selection-end-line="5" selection-end-column="66" />
         </state>
       </provider>
     </entry>

@@ -223,7 +223,8 @@ function sharePhotos(){
             fs.readFile(images[i].file, function(err, data){
                 if(!images[i].isShared){
                     images[i].isShared = true;
-                    socket.emit('imgByClient', { image: true, buffer: data});
+                    //socket.emit('imgByClient', { image: true, buffer: data, destid: currentUser.connectedToId});
+                    network.sendImage({ image: true, buffer: data, destid: currentUser.connectedToId });
                 }
             });
         }
