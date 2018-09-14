@@ -1,3 +1,5 @@
+'use strict';
+
 let { saveAs } = require('file-saver/FileSaver');
 const {dialog} = require('electron').remote;
 const prompt = require('electron-prompt');
@@ -25,6 +27,8 @@ let autoShare = false;
 let settings = [[ 'autoShare', false]]
 let settingsMap = new Map(settings);
 let currentUser = null;
+var exports = module.exports = {};
+let network = require('./network');
 
 //TODO chat
 
@@ -111,7 +115,7 @@ function createImageObject(src, isShared, imgcanvas){
     images.push(imageObj);
 }
 
-function displayImage(fileNames, isShared) {
+exports.displayImage = function (fileNames, isShared) {
     fileNames.forEach(function(file){
         let src = (isShared) ? ("data:image/png;base64," + Buffer.from((file.buffer)).toString('base64')) : file;
         const img = new Image();
@@ -204,7 +208,7 @@ function openDialog() {
         if (fileNames === undefined) {
             return;
         }
-        displayImage(fileNames, false);
+        exports.displayImage(fileNames, false);
     })
 }
 
@@ -256,20 +260,23 @@ function loadSettings(filename){
 }
 
 function sharePhotos(){
-    if(images.length == 0) swal({text: "There are no images to share", type: "warning"}); return
-
+    if(images.length == 0){
+        swal({text: "There are no images to share", type: "warning"});
+        return;
+    }
     if(currentUser !== null && currentUser !== undefined && currentUser.isConnected){
+        console.log("hit kom vi iaf");
         if(autoShare) {
             for (let i = 0; i < images.length; i++) {
                 fs.readFile(images[i].file, function (err, data) {
                     if(!images[i].isShared) {
                         images[i].isShared = true;
-                        socket.emit('imgByClient', { image: true, buffer: data });
+                        exports.socket.emit('imgByClient', { image: true, buffer: data });
                     }
                 });
             }
         }
-        else if(!autoShare && selectedImages.length > 0){
+        else if(!autoShare){
             for(let x of selectedImages){
                 if($(x).attr('class') === 'imgcanvas'){
                     let curr = $(x)[0];
@@ -278,7 +285,7 @@ function sharePhotos(){
                             if(!y.isShared){
                                 fs.readFile(y.file, function(err, data) {
                                     y.isShared = true;
-                                    socket.emit('imgByClient', { image: true, buffer: data});
+                                    exports.socket.emit('imgByClient', { image: true, buffer: data});
                                 });
                             }
                         }
@@ -313,7 +320,7 @@ function deleteSelected(){
 function connectToFriend(){
     if(currentUser !== null && currentUser !== undefined){
         let onlinefriends = [];
-        socket.emit('getonlinefriends', {username: currentUser.username}, (error, data) => {
+        exports.socket.emit('getonlinefriends', {username: currentUser.username}, (error, data) => {
             for(let i = 0; i < currentUser.friendslist.length; i++){
                 for(let j = 0; j < data.rows.length; j++){
                     let friendobj = JSON.parse(JSON.stringify(data.rows[j]));
@@ -336,7 +343,7 @@ function connectToFriend(){
                 }
             }).then((result) => {
                 if (result.value) {
-                    socket.emit('connecttofriend', {user: currentUser.username, friend: onlinefriends[swal.getInput().selectedIndex]}, (error, data) => {
+                    exports.socket.emit('connecttofriend', {user: currentUser.username, friend: onlinefriends[swal.getInput().selectedIndex]}, (error, data) => {
                         if(error) swal(error);
                     });
                 }
@@ -354,7 +361,7 @@ function createUserObj(username){
         connected: false,
         connectedTo: null,
     }
-    socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
+    exports.socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
         if (error) swal(error);
         else {
             for (let i = 0; i < data.length; i++) {
@@ -390,7 +397,7 @@ function showUserInfo(){
 
 
 function login(username, hashedpw){
-    socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
+    exports.socket.emit('hashedpw', {username: username, hashedpw: hashedpw}, (error, data) => {
         if (error) swal(error);
         else {
             socket.emit('customClientInfo', {
@@ -403,10 +410,10 @@ function login(username, hashedpw){
 }
 
 function register(username, hashedpw){
-    socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
+    exports.socket.emit('createuser', {username: username, hashedpw: hashedpw}, (error, data) => {
         if (error) swal(error);
         else {
-            socket.emit('customClientInfo', {
+            exports.socket.emit('customClientInfo', {
                 customId: username,
             });
             createUserObj(username);
@@ -416,42 +423,48 @@ function register(username, hashedpw){
 }
 
 function showRegisterSignInDialog(result, username, password){
+    console.log(result.value);
+    console.log(result.dismiss);
     let newUser = false;
-    if(!result.value && result.DismissReason !== undefined && result.dismiss === result.DismissReason.cancel) newUser = true;
-    if(result.value) {
-        swal({
-            title: (result.value) ? "Sign in" : "Register",
-            type: 'question',
-            html:
-                '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
-                '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
-            showCloseButton: true,
-            showCancelButton: true,
-            focusConfirm: true,
-            confirmButtonText:
-                '<strong>OK</strong>',
-            confirmButtonAriaLabel: 'OK',
-            cancelButtonText:
-                '<strong>Cancel</strong>',
-            cancelButtonAriaLabel: 'Cancel',
-            preConfirm: function () {
-                username = document.getElementById('swal-input1').value;
-                password = document.getElementById('swal-input2').value;
-            }
-        }).then((result) => {
-            if (result.value) {
-                socket.emit('requestsalt', (error, data) => {
-                    let salt = data;
-                    let hashedpw = md5(username + salt + password);
-                    if (!newUser) {
-                        login(username, hashedpw);
-                    } else if (result.DismissReason.cancel) {
-                        register(username, hashedpw);
-                    }
-                })
-            }
-        })
+    if(result.dismiss === swal.DismissReason.cancel){
+        newUser = true;
     }
+    if(result.dismiss === swal.DismissReason.close){
+        return;
+    }
+    swal({
+        title: (newUser) ?  "Register" : "Sign in" ,
+        type: 'question',
+        html:
+            '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
+            '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
+        showCloseButton: true,
+        showCancelButton: true,
+        focusConfirm: true,
+        confirmButtonText:
+            '<strong>OK</strong>',
+        confirmButtonAriaLabel: 'OK',
+        cancelButtonText:
+            '<strong>Cancel</strong>',
+        cancelButtonAriaLabel: 'Cancel',
+        preConfirm: function () {
+            username = document.getElementById('swal-input1').value;
+            password = document.getElementById('swal-input2').value;
+        }
+    }).then((result) => {
+        if (result.value) {
+            exports.socket.emit('requestsalt', (error, data) => {
+                let salt = data;
+                let hashedpw = md5(username + salt + password);
+                if (!newUser) {
+                    login(username, hashedpw);
+                } else if (result.DismissReason.cancel) {
+                    register(username, hashedpw);
+                }
+            })
+        }
+    })
+
 }
 
 function loginDialog(){
@@ -521,7 +534,7 @@ function addFriend() {
             }
         }).then((result) => {
             if (result.value) {
-                socket.emit('addfriend', {toAdd: username}, (error, data) => {
+                exports.socket.emit('addfriend', {toAdd: username}, (error, data) => {
                     if (error) {
                         swal(error);
                     } else {
@@ -663,7 +676,8 @@ $( document ).ready(function (){
     switch(filename[0]){
         case "index.html":
             socket = io.connect('https://shoumiserver.herokuapp.com');
-            startSocketListeners();
+            exports.socket = socket;
+            network.startSocketListeners();
             globalcanvas = document.createElement("canvas");
             globalcanvas.id = "globalcanvas";
             main = document.getElementsByTagName("main")[0];
@@ -680,7 +694,7 @@ $( document ).ready(function (){
                 for(let f of e.dataTransfer.files){
                     draggedFiles.add(f.path);
                 }
-                displayImage(draggedFiles);
+                exports.displayImage(draggedFiles);
             });
             document.addEventListener('dragover', function (e) {
                 e.preventDefault();
@@ -714,40 +728,26 @@ $( document ).ready(function (){
     }
 });
 
+exports.displaySwal = function(text){
+    swal(text);
+}
 
+exports.getUsers = function() {
+    return users;
+}
 
-function startSocketListeners() {
-    socket.on('newuser', function(data) {
-        users = data.userlist;
-    });
+exports.getCurrentUser = function() {
+    return currentUser;
+}
 
-    socket.on('userleft',function(data) {
-        users = data.userlist;
-    });
+exports.setUsers = function(newusers) {
+    users = newusers;
+}
 
-    socket.on('broadcast',function(data) {
-        console.log(data.description);
-    });
+exports.setDidRequest = function(bool) {
+    didRequest = bool;
+}
 
-    socket.on('connectionsuccess', function(data){
-        if(didRequest) {
-            swal("You are now connected with user " + data.dest);
-            currentUser.connectedTo = data.dest;
-        } else {
-            swal("User " + data.requester + " has initiated a connection with you");
-            currentUser.connectedTo = data.requester;
-        }
-        currentUser.isConnected = true;
-        didRequest = false;
-    });
-
-    socket.on('imgByClient', function(data) {
-        let fileNames = [data];
-        displayImage(fileNames, true);
-    });
-
-    socket.on('requestConnectedTo', function(callback) {
-        callback(null, currentUser.connectedTo);
-    });
-
+exports.didRequest = function() {
+    return didRequest;
 }
