@@ -19,6 +19,6 @@ Download the latest setup.exe from [releases](https://github.com/Peldan/imgviewe
 
 
 ## Acknowledgments
-
+* Chanut is Industries - for using an icon of theirs
 * Google
 * My coffee percolator
