@@ -44,7 +44,7 @@
           <entry key="css" value="732" />
           <entry key="gitignore" value="44" />
           <entry key="html" value="1510" />
-          <entry key="js" value="33225" />
+          <entry key="js" value="33268" />
           <entry key="json" value="336" />
           <entry key="md" value="401" />
         </counts>
@@ -54,7 +54,7 @@
           <entry key="CSS" value="732" />
           <entry key="HTML" value="1515" />
           <entry key="JSON" value="336" />
-          <entry key="JavaScript" value="33220" />
+          <entry key="JavaScript" value="33263" />
           <entry key="Markdown" value="401" />
           <entry key="PLAIN_TEXT" value="44" />
         </counts>
@@ -113,8 +113,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/renderer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="441">
-              <caret line="242" column="80" selection-start-line="242" selection-start-column="80" selection-end-line="242" selection-end-column="80" />
+            <state relative-caret-position="472">
+              <caret line="238" column="44" lean-forward="true" selection-start-line="238" selection-start-column="44" selection-end-line="238" selection-end-column="44" />
             </state>
           </provider>
         </entry>
@@ -122,8 +122,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/network.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="68">
-              <caret line="4" column="33" lean-forward="true" selection-start-line="4" selection-start-column="33" selection-end-line="4" selection-end-column="33" />
+            <state relative-caret-position="85">
+              <caret line="5" column="71" lean-forward="true" selection-start-line="5" selection-start-column="71" selection-end-line="5" selection-end-column="71" />
             </state>
           </provider>
         </entry>
@@ -156,7 +156,6 @@
       <find>didrequ</find>
       <find>didrequest</find>
       <find>socket.on('connect')</find>
-      <find>share</find>
       <find>isconnected</find>
       <find>You're</find>
       <find>sharephoto</find>
@@ -180,6 +179,7 @@
       <find>layercanvas</find>
       <find>selectmode</find>
       <find>emit</find>
+      <find>share</find>
     </findStrings>
     <replaceStrings>
       <replace>let</replace>
@@ -389,12 +389,12 @@
       <workItem from="1536679159261" duration="13553000" />
       <workItem from="1536698919615" duration="6276000" />
       <workItem from="1536756463558" duration="7777000" />
-      <workItem from="1536932831836" duration="7038000" />
+      <workItem from="1536932831836" duration="7235000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="266024000" />
+    <option name="totallyTimeSpent" value="266221000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -564,15 +564,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/network.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" column="33" lean-forward="true" selection-start-line="4" selection-start-column="33" selection-end-line="4" selection-end-column="33" />
+        <state relative-caret-position="85">
+          <caret line="5" column="71" lean-forward="true" selection-start-line="5" selection-start-column="71" selection-end-line="5" selection-end-column="71" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/js/renderer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="441">
-          <caret line="242" column="80" selection-start-line="242" selection-start-column="80" selection-end-line="242" selection-end-column="80" />
+        <state relative-caret-position="472">
+          <caret line="238" column="44" lean-forward="true" selection-start-line="238" selection-start-column="44" selection-end-line="238" selection-end-column="44" />
         </state>
       </provider>
     </entry>
