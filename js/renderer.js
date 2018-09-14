@@ -219,11 +219,11 @@ function sharePhotos(){
         return;
     }
     if(currentUser !== null && currentUser !== undefined && currentUser.isConnected) {
-        for (let i = 0; i < images.length; i++) {
-            fs.readFile(images[i].file, function (err, data) {
-                if (!images[i].isShared) {
+        for(let i = 0; i < images.length; i++) {
+            fs.readFile(images[i].file, function(err, data){
+                if(!images[i].isShared){
                     images[i].isShared = true;
-                    network.sendImage(data, currentUser.connectedToId);
+                    socket.emit('imgByClient', { image: true, buffer: data});
                 }
             });
         }
