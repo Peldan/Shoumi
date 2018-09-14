@@ -2,8 +2,8 @@
 
 let renderer = require('./renderer');
 
-exports.sendImage = function(data){
-    renderer.socket.emit('imgByClient', { image: true, buffer: data });
+exports.sendImage = function(data, destid){
+    renderer.socket.emit('imgByClient', { isImage: true, buffer: data, destid: destid});
 }
 
 exports.startSocketListeners = function() {
@@ -21,24 +21,22 @@ exports.startSocketListeners = function() {
     });
 
     renderer.socket.on('connectionsuccess', function(data){
+        let currentUser = renderer.getCurrentUser();
         if(renderer.didRequest()) {
             renderer.displaySwal("You are now connected with user " + data.dest);
-            renderer.getCurrentUser().connectedTo = data.dest;
+            currentUser.connectedTo = data.dest;
+            currentUser.connectedToId = data.destid;
         } else {
             renderer.displaySwal("User " + data.requester + " has initiated a connection with you");
-            renderer.getCurrentUser().connectedTo = data.requester;
+            currentUser.connectedTo = data.requester;
+            currentUser.connectedToId = data.requesterid;
         }
-        renderer.getCurrentUser().isConnected = true;
+        currentUser.isConnected = true;
         renderer.setDidRequest(false);
     });
 
     renderer.socket.on('imgByClient', function(data) {
-        console.log("VAFAN");
         let fileNames = [data];
         renderer.displayImage(fileNames, true);
-    });
-
-    renderer.socket.on('requestConnectedTo', function(callback) {
-        callback(null, renderer.getCurrentUser().connectedTo);
     });
 }

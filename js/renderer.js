@@ -224,7 +224,7 @@ function sharePhotos(){
                 fs.readFile(images[i].file, function (err, data) {
                     if(!images[i].isShared) {
                         images[i].isShared = true;
-                        network.sendImage(data);
+                        network.sendImage(data, currentUser.connectedToId);
                         //exports.socket.emit('imgByClient', { image: true, buffer: data });
                     }
                 });
@@ -314,6 +314,7 @@ function createUserObj(username){
         friendslist: [],
         connected: false,
         connectedTo: null,
+        connectedToId: null,
     }
     exports.socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
         if (error) swal(error);
