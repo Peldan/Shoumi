@@ -3,6 +3,7 @@ let event = require('./event');
 const swal = require('sweetalert2');
 let renderer = require('./renderer');
 let network = require('./network');
+let file = require('./file');
 const {dialog} = require('electron').remote;
 
 exports.connectToFriend = function (onlinefriends) {
@@ -19,7 +20,7 @@ exports.connectToFriend = function (onlinefriends) {
             title: "Start an image-sharing session with a friend",
             text: "Online friends",
             input: 'select',
-            imageUrl: './build/friend.png',
+            imageUrl: file.resourcesPath + "friend.png",
             inputOptions: onlinefriends,
             showCloseButton: true,
             showCancelButton: true,
@@ -72,7 +73,7 @@ exports.showRegisterSignInDialog = function(result, username, password) {
         showCloseButton: true,
         showCancelButton: true,
         focusConfirm: true,
-        imageUrl: './build/account.png',
+        imageUrl: file.resourcesPath + "account.png",
         confirmButtonText:
             '<strong>OK</strong>',
         confirmButtonAriaLabel: 'OK',
@@ -100,7 +101,7 @@ exports.showUserInfo = function() {
     }
     swal({
         title: "Logged in as " + currentUser.username,
-        imageUrl: './build/account.png',
+        imageUrl: file.resourcesPath + "account.png",
         showCloseButton: true,
         showCancelButton: true,
         focusConfirm: true,
@@ -119,7 +120,7 @@ exports.loginDialog = function () {
             showCloseButton: true,
             showCancelButton: true,
             focusConfirm: true,
-            imageUrl: './build/account.png',
+            imageUrl: file.resourcesPath + "account.png",
             confirmButtonText:
                 '<strong>Sign in</strong>',
             confirmButtonAriaLabel: 'Sign in',
@@ -147,7 +148,7 @@ exports.addFriend = function () {
             showCloseButton: true,
             showCancelButton: true,
             focusConfirm: true,
-            imageUrl: './build/friend.png',
+            imageUrl: file.resourcesPath + "friend.png",
             confirmButtonText:
                 '<strong>Add</strong>',
             confirmButtonAriaLabel: 'OK',

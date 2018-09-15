@@ -6,6 +6,10 @@ let JSZip = require('jszip');
 const fs = require('fs');
 let settings = [[ 'autoShare', false]]
 let settingsMap = new Map(settings);
+let isDev = require('electron-is-dev');
+
+
+exports.resourcesPath = (isDev) ?  ('./build/') : (process.resourcesPath + "\\");
 
 exports.zipFilesAndDownload = function(selectedImages) {
     if(renderer.getImageArray().length === 0){
