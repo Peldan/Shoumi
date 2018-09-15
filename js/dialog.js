@@ -1,18 +1,25 @@
 'use strict';
-
+let event = require('./event');
 const swal = require('sweetalert2');
 let renderer = require('./renderer');
 let network = require('./network');
 const {dialog} = require('electron').remote;
 
 exports.connectToFriend = function (onlinefriends) {
-    console.log(renderer.getCurrentUser());
+    if(onlinefriends === undefined || onlinefriends.length === 0){
+        swal({
+            title: "Bad news",
+            text: "None of your friends are online right now.",
+            type: "warning"
+        })
+        return;
+    }
     if(renderer.getCurrentUser() !== undefined && renderer.getCurrentUser() !== null) {
         swal({
             title: "Start an image-sharing session with a friend",
             text: "Online friends",
-            type: 'question',
             input: 'select',
+            imageUrl: './build/friend.png',
             inputOptions: onlinefriends,
             showCloseButton: true,
             showCancelButton: true,
@@ -22,7 +29,7 @@ exports.connectToFriend = function (onlinefriends) {
             }
         }).then((result) => {
             if (result.value) {
-                exports.socket.emit('connecttofriend', {
+                event.socket.emit('connecttofriend', {
                     user: renderer.getCurrentUser().username,
                     friend: onlinefriends[swal.getInput().selectedIndex]
                 }, (error, data) => {
@@ -59,13 +66,13 @@ exports.showRegisterSignInDialog = function(result, username, password) {
     }
     swal({
         title: (newUser) ?  "Register" : "Sign in" ,
-        type: 'question',
         html:
             '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>' +
             '<input id="swal-input2" class="swal2-input" type="password" placeholder="Password" required/>',
         showCloseButton: true,
         showCancelButton: true,
         focusConfirm: true,
+        imageUrl: './build/account.png',
         confirmButtonText:
             '<strong>OK</strong>',
         confirmButtonAriaLabel: 'OK',
@@ -93,7 +100,7 @@ exports.showUserInfo = function() {
     }
     swal({
         title: "Logged in as " + currentUser.username,
-        type: 'info',
+        imageUrl: './build/account.png',
         showCloseButton: true,
         showCancelButton: true,
         focusConfirm: true,
@@ -136,11 +143,11 @@ exports.addFriend = function () {
         let username;
         swal({
             title: "Add friend",
-            type: 'question',
             html: '<input id="swal-input1" class="swal2-input" type="text" placeholder="Username" required/>',
             showCloseButton: true,
             showCancelButton: true,
             focusConfirm: true,
+            imageUrl: './build/friend.png',
             confirmButtonText:
                 '<strong>Add</strong>',
             confirmButtonAriaLabel: 'OK',

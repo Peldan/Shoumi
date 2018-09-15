@@ -1,6 +1,7 @@
 'use strict';
 let event = require('./event')
 let renderer = require('./renderer');
+let network = require('./network');
 let dialogmodule = require('./dialog');
 let md5 = require('md5');
 
@@ -36,7 +37,7 @@ exports.register = function(username, hashedpw) {
             dialogmodule.displaySwal(error);
         }
         else {
-            exports.socket.emit('customClientInfo', {
+            event.socket.emit('customClientInfo', {
                 customId: username,
             });
             renderer.createUserObj(username);
@@ -62,6 +63,7 @@ exports.login = function(username, hashedpw) {
 
 exports.requestClientInfo = function () {
     let currentUser = renderer.getCurrentUser();
+    console.log(currentUser);
     event.socket.emit('requestclientinfo', {username: currentUser.username}, (error, data) => {
         if (error){
             dialogmodule.displaySwal(error);
@@ -81,10 +83,10 @@ exports.requestClientInfo = function () {
     });
 }
 
-exports.connectToFriend = function() {
+exports.getOnlineFriends = function() {
     if(renderer.getCurrentUser() !== undefined && renderer.getCurrentUser() !== null) {
         let onlinefriends = [];
-        exports.socket.emit('getonlinefriends', {username: renderer.getCurrentUser().username}, (error, data) => {
+        event.socket.emit('getonlinefriends', {username: renderer.getCurrentUser().username}, (error, data) => {
             for(let i = 0; i < renderer.getCurrentUser().friendslist.length; i++){
                 for(let j = 0; j < data.rows.length; j++){
                     let friendobj = JSON.parse(JSON.stringify(data.rows[j]));
@@ -93,7 +95,7 @@ exports.connectToFriend = function() {
                     }
                 }
             }
-            dialogmodule.connectToFriend(onlinefriends, renderer.getCurrentUser());
+            dialogmodule.connectToFriend(onlinefriends);
         })
     } else {
         dialogmodule.displaySwal({text: "You are not logged in!", type: "warning"})

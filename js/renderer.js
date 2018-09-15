@@ -14,7 +14,6 @@ let users = [];
 let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
-let autoShare = false;
 let currentUser = null;
 let window = electron.remote.getCurrentWindow();
 
@@ -58,6 +57,7 @@ exports.createUserObj = function(username){
         connectedTo: null,
         connectedToId: null,
     }
+    network.requestClientInfo();
 }
 
 
@@ -153,12 +153,7 @@ exports.displayImage = function (fileNames, isShared) {
         createImageObject(src, isShared, firstCanvas);
     });
     imgCanvasList = document.getElementsByClassName('imgcanvas');
-    //window.scrollTo(0, $(imgCanvasList[imgCanvasList.length - 1]).offset().top); //scrolls the latest appended image into view
-    //window.scrollTo(0,document.body.scrollHeight);
     addCanvasListener();
-    if(autoShare){
-        sharePhotos();
-    }
 }
 
 exports.displayTip = function() {

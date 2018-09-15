@@ -87,7 +87,7 @@ exports.listenForEvents = function() {
             dialog.loginDialog();
         }
         if(e.target.id == 'connectbtn') {
-            dialog.connectToFriend();
+            network.getOnlineFriends();
         }
     });
 
