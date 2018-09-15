@@ -15,8 +15,6 @@ let images = [];
 let $ = require("jquery");
 let imgdiv = $('#bild');
 let currentUser = null;
-let window = electron.remote.getCurrentWindow();
-
 
 function createImageObject(src, isShared, imgcanvas){
     let imageObj = new Object();
@@ -152,6 +150,8 @@ exports.displayImage = function (fileNames, isShared) {
         newrow.appendChild(firstCanvas);
         createImageObject(src, isShared, firstCanvas);
     });
+    console.log(exports.window);
+    exports.window.scrollTo(0,document.body.scrollHeight);
     imgCanvasList = document.getElementsByClassName('imgcanvas');
     addCanvasListener();
 }
@@ -228,12 +228,10 @@ exports.didRequest = function() {
 
 exports.isFullscreen = isFullscreen;
 
-
-exports.window = window;
-
 $( document ).ready(function(){
     let eventhandler = require('./event');
     eventhandler.initDocument();
+    exports.window = electron.remote.getCurrentWindow();
 })
 
 exports.document = document;

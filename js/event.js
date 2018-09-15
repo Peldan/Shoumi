@@ -4,12 +4,13 @@ let dialog = require('./dialog');
 let network = require('./network');
 let socket;
 let $ = require("jquery");
-
+let electron = require('electron');
 
 exports.initDocument = function() {
     exports.listenForEvents();
     let filename = window.location.pathname.split("/").slice(-1);
     file.loadSettings(filename);
+    exports.window = electron.remote.getCurrentWindow();
     switch(filename[0]){
         case "index.html":
             socket = renderer.io.connect('https://shoumiserver.herokuapp.com');
