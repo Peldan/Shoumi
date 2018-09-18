@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Shoumi - Main Window</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
-
 </head>
 <body>
 
@@ -27,7 +25,6 @@
                         <li><a><i id="friendbtn" class="toolbtn tiny material-icons">person_add</i></a></li>
                         <li><a><i id="connectbtn" class="toolbtn tiny material-icons">group</i></a></li>
                         <li><a><i id="sharebtn" class="toolbtn tiny material-icons">share</i></a></li>
-                        <li><a><i id="selectbtn" class="toolbtn tiny material-icons">select_all</i></a></li>
                         <li><a><i id="deletebtn" class="toolbtn tiny material-icons">delete</i></a></li>
                         <li><a><i id="zipbtn" class="toolbtn tiny material-icons">cloud_download</i></a></li>
                     </ul>
@@ -60,11 +57,11 @@
         </div>
     </div>
 </main>
-<script type=text/javascript src="js/index.js"></script>
 <script type="text/javascript" src="js/materialize.min.js"></script>
 <script type="text/javascript" src="https://shoumiserver.herokuapp.com/socket.io/socket.io.js"></script>
 <script>
     require('./js/renderer.js')
 </script>
+<script type=text/javascript src="js/index.js"></script>
 </body>
 </html>

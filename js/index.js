@@ -68,7 +68,7 @@ function openSettings(){
     settingsWindow.loadFile(settingsTemplate);
     settingsWindow.on('close', () => {
         settingsWindow = null;
-    })
+    });
 }
 
 app.on('ready', () => {
