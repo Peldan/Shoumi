@@ -1,9 +1,13 @@
 'use strict';
 var exports = module.exports = {};
+let electron = require('electron');
+const { ipcRenderer, desktopCapturer } = require('electron');
+const electronScreen = electron.screen;
 const fs = require('fs');
 let dialogmodule = require('./dialog');
 let network = require('./network');
-let electron = require('electron');
+const os = require('os')
+const path = require('path')
 let imgCanvasList, main, header, cardarea;
 let currentBg = 0;
 let isFullscreen = false;
@@ -46,6 +50,34 @@ function visibleImages(visibility){
         imgCanvasList[i].style.visibility = visibility;
     }
 }
+
+function determineScreenShotSize(){
+    const screenSize = electronScreen.getPrimaryDisplay().workAreaSize;
+    const maxDimension = Math.max(screenSize.width, screenSize.height);
+    return {
+        width: maxDimension * window.devicePixelRatio,
+        height: maxDimension * window.devicePixelRatio
+    }
+}
+
+ipcRenderer.on('screenshot', () => {
+    const thumbSize = determineScreenShotSize();
+    let options = { types: ['screen'], thumbnailSize: thumbSize }
+    desktopCapturer.getSources(options, function(error, sources){
+       if(error) return console.log(error);
+       sources.forEach((source) => {
+           if(source.name === 'Entire screen' || source.name === 'Screen 1') {
+               const screenshotPath = path.join(os.tmpdir(), 'screenshot.png');
+               fs.writeFile(screenshotPath, source.thumbnail.toPNG(), function(error) {
+                   if(error) return console.log(error);
+                   exports.displayImage([screenshotPath], false);
+               })
+
+           }
+       })
+    });
+})
+
 
 exports.createUserObj = function(username){
     currentUser = {
