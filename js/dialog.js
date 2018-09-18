@@ -86,7 +86,7 @@ exports.showRegisterSignInDialog = function(result, username, password) {
         }
     }).then((result) => {
         if (result.value) {
-            network.requestSalt(username, password, newUser, result)
+            network.requestSalt(username, password, newUser, result, swal)
         }
     })
 }

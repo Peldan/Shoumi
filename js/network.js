@@ -19,14 +19,14 @@ exports.addFriend = function(username){
     });
 }
 
-exports.requestSalt = function(username, password, newUser, result) {
+exports.requestSalt = function(username, password, newUser) {
     event.socket.emit('requestsalt', (error, data) => {
         let salt = data;
         let hashedpw = md5(username + salt + password);
-        if (!newUser) {
-            exports.login(username, hashedpw);
-        } else if (result.DismissReason.cancel) {
+        if(newUser){
             exports.register(username, hashedpw);
+        } else {
+            exports.login(username, hashedpw);
         }
     })
 }
