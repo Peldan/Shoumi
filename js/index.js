@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, globalShortcut } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const isDev = require('electron-is-dev');
 const log = require('electron-log');
@@ -7,6 +7,7 @@ log.transports.file.level = "info";
 let settingsWindow, window;
 let template = 'index.html';
 let settingsTemplate = 'settings.html';
+let contents;
 let fileName;
 let tray = null;
 let isQuitting = false;
@@ -57,6 +58,7 @@ function createWindow(){
     window.on('will-navigate', (e) => {
         e.preventDefault();
     });
+    contents = window.webContents;
 }
 
 function openSettings(){
@@ -72,6 +74,11 @@ function openSettings(){
 }
 
 app.on('ready', () => {
+    const shortcut = globalShortcut.register('PrintScreen', () => {
+        if(contents !== undefined || contents !== null){
+            contents.send('screenshot');
+        }
+    });
     createWindow();
     if(isDev){
         tray = new Tray('./build/icon.ico');
@@ -99,6 +106,10 @@ app.on('ready', () => {
 
 ipcMain.on('requestsocket', (event, arg) => {
     event.returnValue = socket;
+})
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
 })
 
 
